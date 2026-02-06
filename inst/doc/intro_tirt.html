@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Introduction to tirt: Testlet Item Response Theory</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to tirt: Testlet Item Response
+Theory</h1>
+
+
+
+<p><strong>1. Overview</strong></p>
+<p>The <strong>tirt</strong> package provides a light-version
+user-friendly comprehensive toolkit for <strong>Item Response Theory
+(IRT)</strong> and <strong>Testlet Response Theory (TRT)</strong>
+analysis. It supports:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Data Simulation</strong>: Generating data for simple IRT
+and Testlet models.</p></li>
+<li><p><strong>Estimation</strong>: Marginal Maximum Likelihood (MML)
+and Joint Maximum Likelihood (JML) estimation.</p></li>
+<li><p><strong>Fixed Calibration</strong>: Estimating item parameters
+with fixed persons, or person parameters with fixed items.</p></li>
+<li><p><strong>Equating</strong>: Linking scales using Mean-Mean,
+Mean-Sigma, and Stocking-Lord methods.</p></li>
+</ol>
+<p>This vignette walks through the primary workflows.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(tirt)</span></code></pre></div>
+<p><strong>2. Data Simulation</strong></p>
+<p>Before estimating models, let’s generate some synthetic data using
+sim_irt (standard IRT) and sim_trt (testlet structure).</p>
+<p><strong>2.1 Standard IRT Simulation</strong></p>
+<p>We generate responses for <strong>500 examinees</strong> on
+<strong>15 items</strong> using the <em>2-Parameter Logistic (2PL)</em>
+model.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co"># Define item structure: 1 block of 15 items using 2PL</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">sim_irt</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">n_people =</span> <span class="dv">500</span>, </span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">item_structure =</span> <span class="fu">list</span>(</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>, <span class="at">n_items =</span> <span class="dv">15</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  ),</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">theta_mean =</span> <span class="dv">0</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">theta_sd =</span> <span class="dv">1</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; Starting Simulation for N = 500 examinees...</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Ability (Theta): Generated from N(mean=0.00, sd=1.00).</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 1: 15 items using 2PL</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt;    - Discrimination (a): Default values used (Fixed at 1).</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;    - Difficulty (b): Default values used (Fixed at 0).</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; Constructing final data frames...</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; Simulation Complete.</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; Summary: 15 items, 500 examinees.</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co"># Access responses and true parameters</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="fu">head</span>(sim_data<span class="sc">$</span>resp)</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;   item_1 item_2 item_3 item_4 item_5 item_6 item_7 item_8 item_9 item_10</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; 1      1      0      1      0      1      1      1      1      1       1</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 2      0      0      1      0      0      1      0      1      0       0</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt; 3      1      1      1      1      1      1      1      1      1       1</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 4      0      1      1      1      0      1      0      0      0       1</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; 5      0      0      1      0      1      1      1      1      1       0</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt; 6      1      1      1      1      1      1      1      1      1       1</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;   item_11 item_12 item_13 item_14 item_15</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt; 1       0       0       0       1       0</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt; 2       1       0       0       0       0</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt; 3       1       1       1       0       1</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; 4       0       1       0       0       1</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt; 5       1       0       1       0       0</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt; 6       1       1       1       1       1</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="fu">head</span>(sim_data<span class="sc">$</span>true_params)</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt;   item_id block model categories discrimination guessing difficulty</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt; 1  item_1     1   2PL          2              1        0          0</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt; 2  item_2     1   2PL          2              1        0          0</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt; 3  item_3     1   2PL          2              1        0          0</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt; 4  item_4     1   2PL          2              1        0          0</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt; 5  item_5     1   2PL          2              1        0          0</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co">#&gt; 6  item_6     1   2PL          2              1        0          0</span></span></code></pre></div>
+<p><strong>2.2 Testlet Simulation</strong></p>
+<p>For <strong>Testlet Response Theory</strong>, we define blocks that
+share a common local dependency (Gamma).</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Define 2 testlets with 5 items each</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>trt_data <span class="ot">&lt;-</span> <span class="fu">sim_trt</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">n_people =</span> <span class="dv">500</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">item_structure =</span> <span class="fu">list</span>(</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;2PLT&quot;</span>, <span class="at">n_items =</span> <span class="dv">5</span>, <span class="at">testlet_id =</span> <span class="st">&quot;T1&quot;</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;2PLT&quot;</span>, <span class="at">n_items =</span> <span class="dv">5</span>, <span class="at">testlet_id =</span> <span class="st">&quot;T2&quot;</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  )</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;    STARTING TRT SIMULATION (N = 500)</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Ability (Theta): Generated from N(mean=0.00, sd=1.00).</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Testlet Effects (Gamma):</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt;    - Testlet &#39;T1&#39;: Generated Gamma ~ N(0, 0.50) [Default].</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt;    - Testlet &#39;T2&#39;: Generated Gamma ~ N(0, 0.50) [Default].</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 1: 5 items (Model: 2PLT, Testlet: T1)</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt;       - Discrimination a: Default used (1.00).</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt;       - Difficulty/Loc b: Default used (0.00).</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 2: 5 items (Model: 2PLT, Testlet: T2)</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt;       - Discrimination a: Default used (1.00).</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt;       - Difficulty/Loc b: Default used (0.00).</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; Constructing final dataframes...</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; Simulation Complete.</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; Summary: 10 items, 500 examinees.</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="fu">head</span>(trt_data<span class="sc">$</span>resp)</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt;   item_1 item_2 item_3 item_4 item_5 item_6 item_7 item_8 item_9 item_10</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; 1      0      1      1      0      0      1      0      0      0       0</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; 2      1      1      1      1      1      1      0      1      0       1</span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; 3      1      0      1      1      1      0      0      0      0       0</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; 4      1      0      0      0      1      1      0      0      0       0</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; 5      0      1      1      0      0      0      0      1      0       1</span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; 6      0      0      1      0      1      0      1      1      1       1</span></span></code></pre></div>
+<p><strong>3. IRT Estimation</strong></p>
+<p>We can estimate parameters using <strong>binary_irt</strong> (for
+dichotomous data), <strong>polytomous_irt</strong> (for graded data), or
+<strong>mixed_irt</strong> (for both).</p>
+<p>Here, we estimate the parameters for the data we just simulated.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Estimate 2PL model</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co"># Note: max_iter set low for vignette speed; use default (100) in practice</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>fit_2pl <span class="ot">&lt;-</span> <span class="fu">binary_irt</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">data =</span> sim_data<span class="sc">$</span>resp, </span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>, </span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;EM&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">max_iter =</span> <span class="dv">20</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>) </span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co"># View estimated item parameters</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(fit_2pl<span class="sc">$</span>item_params))</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;     item discrimination discrimination_se difficulty difficulty_se number</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; 1 item_1          0.926             0.114     -0.063         0.105    500</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 2 item_2          0.986             0.117      0.018         0.100    500</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 3 item_3          0.840             0.110     -0.101         0.115    500</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 4 item_4          0.983             0.117     -0.061         0.100    500</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; 5 item_5          1.036             0.119      0.111         0.096    500</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; 6 item_6          0.914             0.113      0.029         0.106    500</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt;   pvalue</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; 1  0.512</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; 2  0.496</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; 3  0.518</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; 4  0.512</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; 5  0.476</span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; 6  0.494</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co"># View model fit indices</span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="fu">print</span>(fit_2pl<span class="sc">$</span>model_fit)</span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt;           Index     Value</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; 1 LogLikelihood -4219.624</span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; 2           AIC  8499.247</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; 3           BIC  8625.685</span></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; 4    Iterations    13.000</span></span></code></pre></div>
+<p><strong>4. Testlet (TRT) Estimation</strong></p>
+<p>When items are grouped into testlets (e.g., reading passages),
+standard IRT assumptions are violated. tirt allows you to model this
+dependency using <strong>Bi-factor</strong> or <strong>Testlet</strong>
+models. This package allows estimations for binary and polytomous
+testlet models</p>
+<p>We use <strong>trt_binary</strong> for this example. We must define
+the group structure.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Items 1-5 are Testlet 1, Items 6-10 are Testlet 2</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>testlet_structure <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>),   <span class="co"># Indices for Testlet 1</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">10</span>)   <span class="co"># Indices for Testlet 2</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>fit_trt <span class="ot">&lt;-</span> <span class="fu">trt_binary</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">data =</span> trt_data<span class="sc">$</span>resp,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">group =</span> testlet_structure,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">model =</span> <span class="st">&quot;2PLT&quot;</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">&quot;EM&quot;</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">max_iter =</span> <span class="dv">15</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>)</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co"># The output includes item parameters</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="fu">head</span>(fit_trt<span class="sc">$</span>item_params)</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;     item discrimination discrimination_se  difficulty difficulty_se guessing</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; 1 item_1       1.887640         0.1768678  0.18400878    0.06118852        0</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; 2 item_2       1.030662         0.1142394 -0.06652782    0.09738936        0</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; 3 item_3       1.824778         0.1713166  0.02173113    0.06217262        0</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; 4 item_4       1.775003         0.1675142 -0.12431961    0.06403315        0</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; 5 item_5       1.823515         0.1713748  0.10875628    0.06233405        0</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 6 item_6       1.636682         0.1541821  0.03051786    0.06822841        0</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt;   guessing_se</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 1           0</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; 2           0</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; 3           0</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; 4           0</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; 5           0</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; 6           0</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co"># And person parameters including the testlet specific effects (Gamma)</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="fu">head</span>(fit_trt<span class="sc">$</span>person_params)</span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="co">#&gt;   person    ability ability_se    testlet_1 testlet_1_se  testlet_2</span></span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a><span class="co">#&gt; 1      1 -0.4179722  0.6295140  0.001012444    0.6714548 -0.3640896</span></span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a><span class="co">#&gt; 2      2  0.5696989  0.6508913  0.894816372    0.7296370 -0.4251104</span></span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a><span class="co">#&gt; 3      3 -0.1633864  0.6509442  0.951443765    0.6901421 -1.1210697</span></span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a><span class="co">#&gt; 4      4 -0.3173443  0.6253186  0.146364703    0.6644582 -0.4262548</span></span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a><span class="co">#&gt; 5      5 -0.3581111  0.6258050 -0.040190281    0.6693177 -0.2694689</span></span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a><span class="co">#&gt; 6      6  0.2154850  0.6239477 -0.249288095    0.6626316  0.4437022</span></span>
+<span id="cb5-41"><a href="#cb5-41" tabindex="-1"></a><span class="co">#&gt;   testlet_2_se</span></span>
+<span id="cb5-42"><a href="#cb5-42" tabindex="-1"></a><span class="co">#&gt; 1    0.6957473</span></span>
+<span id="cb5-43"><a href="#cb5-43" tabindex="-1"></a><span class="co">#&gt; 2    0.6885031</span></span>
+<span id="cb5-44"><a href="#cb5-44" tabindex="-1"></a><span class="co">#&gt; 3    0.7306446</span></span>
+<span id="cb5-45"><a href="#cb5-45" tabindex="-1"></a><span class="co">#&gt; 4    0.6925863</span></span>
+<span id="cb5-46"><a href="#cb5-46" tabindex="-1"></a><span class="co">#&gt; 5    0.6879875</span></span>
+<span id="cb5-47"><a href="#cb5-47" tabindex="-1"></a><span class="co">#&gt; 6    0.6911133</span></span></code></pre></div>
+<p><strong>5. Universal Estimation (Mixed standaline &amp; testlet
+items)</strong></p>
+<p>Real-world exams often contain a mix of independent items (i.e.,
+using standard IRT) and item bundles/testlets (i.e., using TRT). The
+<strong>irt_trt</strong> function is a universal estimator that handles
+both simultaneously. It can also handle mixed data types (binary and
+polytomous) in the same run.</p>
+<p>To use <strong>irt_trt</strong>, you must provide an
+<em>item_spec</em> data frame that maps each item to its model and
+testlet ID (if any).</p>
+<p><strong>5.1. Step 1: Simulate Mixed Structure Data</strong></p>
+<p>We will generate data for 1000 examinees with:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>10 Independent Binary Items</strong> (2PL Model)</p></li>
+<li><p><strong>5 Independent Polytomous Items</strong> (GRM
+Model)</p></li>
+<li><p><strong>2 Testlet Items</strong> belonging to Testlet “T1” (2PLT
+Model)</p></li>
+<li><p><strong>3 Testlet Items</strong> belonging to Testlet “T2” (GPCMT
+Model)</p></li>
+</ol>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">--- Generating Simulated Data ---</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; --- Generating Simulated Data ---</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2025</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co"># 20 Items Total:</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># 1-10: Binary (2PL) - Independent</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co"># 11-15: Polytomous (GRM, 3 cats) - Independent</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co"># 16-17: Binary (2PLT) - Testlet 1</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co"># 18-20: Polytomous (GPCT, 3 cats) - Testlet 2</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>gamma_1 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, <span class="fl">0.5</span>) <span class="co"># Testlet 1 effect</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>gamma_2 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, <span class="fl">0.6</span>) <span class="co"># Testlet 2 effect</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>resp_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, N, <span class="dv">20</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>item_names <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Item_&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="fu">colnames</span>(resp_matrix) <span class="ot">&lt;-</span> item_names</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co"># Define Item Parameters (True Values)</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>a_true <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">20</span>, <span class="fl">0.8</span>, <span class="fl">1.5</span>)</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>b_true <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="fl">1.5</span>, <span class="fl">1.5</span>, <span class="at">length.out =</span> <span class="dv">20</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a><span class="co"># 1. Simulate Binary Independent (1-10)</span></span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) {</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>a_true[j] <span class="sc">*</span> (theta <span class="sc">-</span> b_true[j])))</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>  resp_matrix[,j] <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(N, <span class="dv">1</span>, p)</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>}</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a><span class="co"># 2. Simulate Poly Independent (11-15) - GR</span></span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">11</span><span class="sc">:</span><span class="dv">15</span>) {</span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a>  b_k <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(b_true[j] <span class="sc">-</span> <span class="fl">0.7</span>, b_true[j] <span class="sc">+</span> <span class="fl">0.7</span>))</span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a>  p1 <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>a_true[j] <span class="sc">*</span> (theta <span class="sc">-</span> b_k[<span class="dv">1</span>])))</span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a>  p2 <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>a_true[j] <span class="sc">*</span> (theta <span class="sc">-</span> b_k[<span class="dv">2</span>])))</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>  <span class="co"># GRM Probabilities</span></span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a>  prob_0 <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p1</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a>  prob_1 <span class="ot">&lt;-</span> p1 <span class="sc">-</span> p2</span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1"></a>  prob_2 <span class="ot">&lt;-</span> p2</span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1"></a>  <span class="co"># Sample</span></span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1"></a>  r <span class="ot">&lt;-</span> <span class="fu">runif</span>(N)</span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1"></a>  resp_matrix[,j] <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(r <span class="sc">&lt;</span> prob_0, <span class="dv">0</span>, <span class="fu">ifelse</span>(r <span class="sc">&lt;</span> prob_0 <span class="sc">+</span> prob_1, <span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1"></a>}</span>
+<span id="cb6-45"><a href="#cb6-45" tabindex="-1"></a></span>
+<span id="cb6-46"><a href="#cb6-46" tabindex="-1"></a><span class="co"># 3. Simulate Binary Testlet 1 (16-17)</span></span>
+<span id="cb6-47"><a href="#cb6-47" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">16</span><span class="sc">:</span><span class="dv">17</span>) {</span>
+<span id="cb6-48"><a href="#cb6-48" tabindex="-1"></a>  eff_theta <span class="ot">&lt;-</span> theta <span class="sc">+</span> gamma_1</span>
+<span id="cb6-49"><a href="#cb6-49" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>a_true[j] <span class="sc">*</span> (eff_theta <span class="sc">-</span> b_true[j])))</span>
+<span id="cb6-50"><a href="#cb6-50" tabindex="-1"></a>  resp_matrix[,j] <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(N, <span class="dv">1</span>, p)</span>
+<span id="cb6-51"><a href="#cb6-51" tabindex="-1"></a>}</span>
+<span id="cb6-52"><a href="#cb6-52" tabindex="-1"></a></span>
+<span id="cb6-53"><a href="#cb6-53" tabindex="-1"></a><span class="co"># 4. Simulate Poly Testlet 2 (18-20) - GPCMT</span></span>
+<span id="cb6-54"><a href="#cb6-54" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">18</span><span class="sc">:</span><span class="dv">20</span>) {</span>
+<span id="cb6-55"><a href="#cb6-55" tabindex="-1"></a>  eff_theta <span class="ot">&lt;-</span> theta <span class="sc">+</span> gamma_2</span>
+<span id="cb6-56"><a href="#cb6-56" tabindex="-1"></a>  <span class="co"># GPCM steps (centered at b_true)</span></span>
+<span id="cb6-57"><a href="#cb6-57" tabindex="-1"></a>  b_vec <span class="ot">&lt;-</span> <span class="fu">c</span>(b_true[j] <span class="sc">-</span> <span class="fl">0.5</span>, b_true[j] <span class="sc">+</span> <span class="fl">0.5</span>) </span>
+<span id="cb6-58"><a href="#cb6-58" tabindex="-1"></a>  </span>
+<span id="cb6-59"><a href="#cb6-59" tabindex="-1"></a>  numer <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, N, <span class="dv">3</span>)</span>
+<span id="cb6-60"><a href="#cb6-60" tabindex="-1"></a>  numer[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb6-61"><a href="#cb6-61" tabindex="-1"></a>  numer[,<span class="dv">2</span>] <span class="ot">&lt;-</span> a_true[j] <span class="sc">*</span> (eff_theta <span class="sc">-</span> b_vec[<span class="dv">1</span>])</span>
+<span id="cb6-62"><a href="#cb6-62" tabindex="-1"></a>  numer[,<span class="dv">3</span>] <span class="ot">&lt;-</span> a_true[j] <span class="sc">*</span> (eff_theta <span class="sc">-</span> b_vec[<span class="dv">1</span>]) <span class="sc">+</span> a_true[j] <span class="sc">*</span> (eff_theta <span class="sc">-</span> b_vec[<span class="dv">2</span>])</span>
+<span id="cb6-63"><a href="#cb6-63" tabindex="-1"></a>  </span>
+<span id="cb6-64"><a href="#cb6-64" tabindex="-1"></a>  max_n <span class="ot">&lt;-</span> <span class="fu">apply</span>(numer, <span class="dv">1</span>, max)</span>
+<span id="cb6-65"><a href="#cb6-65" tabindex="-1"></a>  exps <span class="ot">&lt;-</span> <span class="fu">exp</span>(numer <span class="sc">-</span> max_n)</span>
+<span id="cb6-66"><a href="#cb6-66" tabindex="-1"></a>  probs <span class="ot">&lt;-</span> exps <span class="sc">/</span> <span class="fu">rowSums</span>(exps)</span>
+<span id="cb6-67"><a href="#cb6-67" tabindex="-1"></a>  </span>
+<span id="cb6-68"><a href="#cb6-68" tabindex="-1"></a>  r <span class="ot">&lt;-</span> <span class="fu">runif</span>(N)</span>
+<span id="cb6-69"><a href="#cb6-69" tabindex="-1"></a>  resp_matrix[,j] <span class="ot">&lt;-</span> <span class="fu">apply</span>(<span class="fu">cbind</span>(r, probs), <span class="dv">1</span>, <span class="cf">function</span>(x) {</span>
+<span id="cb6-70"><a href="#cb6-70" tabindex="-1"></a>    <span class="cf">if</span>(x[<span class="dv">1</span>] <span class="sc">&lt;</span> x[<span class="dv">2</span>]) <span class="fu">return</span>(<span class="dv">0</span>)</span>
+<span id="cb6-71"><a href="#cb6-71" tabindex="-1"></a>    <span class="cf">if</span>(x[<span class="dv">1</span>] <span class="sc">&lt;</span> x[<span class="dv">2</span>]<span class="sc">+</span>x[<span class="dv">3</span>]) <span class="fu">return</span>(<span class="dv">1</span>)</span>
+<span id="cb6-72"><a href="#cb6-72" tabindex="-1"></a>    <span class="fu">return</span>(<span class="dv">2</span>)</span>
+<span id="cb6-73"><a href="#cb6-73" tabindex="-1"></a>  })</span>
+<span id="cb6-74"><a href="#cb6-74" tabindex="-1"></a>}</span>
+<span id="cb6-75"><a href="#cb6-75" tabindex="-1"></a></span>
+<span id="cb6-76"><a href="#cb6-76" tabindex="-1"></a>sim_data <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(resp_matrix)</span>
+<span id="cb6-77"><a href="#cb6-77" tabindex="-1"></a><span class="co">#view the data</span></span>
+<span id="cb6-78"><a href="#cb6-78" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(sim_data))</span>
+<span id="cb6-79"><a href="#cb6-79" tabindex="-1"></a><span class="co">#&gt;   Item_1 Item_2 Item_3 Item_4 Item_5 Item_6 Item_7 Item_8 Item_9 Item_10</span></span>
+<span id="cb6-80"><a href="#cb6-80" tabindex="-1"></a><span class="co">#&gt; 1      1      1      1      1      1      1      1      1      1       0</span></span>
+<span id="cb6-81"><a href="#cb6-81" tabindex="-1"></a><span class="co">#&gt; 2      1      1      1      1      0      0      1      1      0       1</span></span>
+<span id="cb6-82"><a href="#cb6-82" tabindex="-1"></a><span class="co">#&gt; 3      1      1      1      1      1      1      1      1      0       1</span></span>
+<span id="cb6-83"><a href="#cb6-83" tabindex="-1"></a><span class="co">#&gt; 4      1      1      1      1      1      1      1      1      1       1</span></span>
+<span id="cb6-84"><a href="#cb6-84" tabindex="-1"></a><span class="co">#&gt; 5      1      1      1      1      1      0      0      1      0       0</span></span>
+<span id="cb6-85"><a href="#cb6-85" tabindex="-1"></a><span class="co">#&gt; 6      1      1      1      1      1      0      0      0      1       0</span></span>
+<span id="cb6-86"><a href="#cb6-86" tabindex="-1"></a><span class="co">#&gt;   Item_11 Item_12 Item_13 Item_14 Item_15 Item_16 Item_17 Item_18 Item_19</span></span>
+<span id="cb6-87"><a href="#cb6-87" tabindex="-1"></a><span class="co">#&gt; 1       1       2       1       2       1       0       1       1       0</span></span>
+<span id="cb6-88"><a href="#cb6-88" tabindex="-1"></a><span class="co">#&gt; 2       1       2       2       0       2       0       0       2       1</span></span>
+<span id="cb6-89"><a href="#cb6-89" tabindex="-1"></a><span class="co">#&gt; 3       1       1       0       0       0       1       0       1       0</span></span>
+<span id="cb6-90"><a href="#cb6-90" tabindex="-1"></a><span class="co">#&gt; 4       1       2       2       2       1       0       0       2       2</span></span>
+<span id="cb6-91"><a href="#cb6-91" tabindex="-1"></a><span class="co">#&gt; 5       0       1       0       2       0       0       0       1       1</span></span>
+<span id="cb6-92"><a href="#cb6-92" tabindex="-1"></a><span class="co">#&gt; 6       2       1       1       0       0       0       0       0       0</span></span>
+<span id="cb6-93"><a href="#cb6-93" tabindex="-1"></a><span class="co">#&gt;   Item_20</span></span>
+<span id="cb6-94"><a href="#cb6-94" tabindex="-1"></a><span class="co">#&gt; 1       1</span></span>
+<span id="cb6-95"><a href="#cb6-95" tabindex="-1"></a><span class="co">#&gt; 2       1</span></span>
+<span id="cb6-96"><a href="#cb6-96" tabindex="-1"></a><span class="co">#&gt; 3       1</span></span>
+<span id="cb6-97"><a href="#cb6-97" tabindex="-1"></a><span class="co">#&gt; 4       2</span></span>
+<span id="cb6-98"><a href="#cb6-98" tabindex="-1"></a><span class="co">#&gt; 5       1</span></span>
+<span id="cb6-99"><a href="#cb6-99" tabindex="-1"></a><span class="co">#&gt; 6       0</span></span></code></pre></div>
+<p><strong>5.2. Step 2: Create the Item Specification</strong></p>
+<p>The item_spec data frame tells the function how to treat each
+item.</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>item</strong>: Must match column names in data.</p></li>
+<li><p><strong>model</strong>: The model to use (e.g., “2PL”, “2PLT”,
+“GPCMT”, “RaschT”, etc.).</p></li>
+<li><p><strong>testlet</strong>: The ID of the testlet. Use NA for
+independent items.</p></li>
+</ol>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Create Item Specification</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>spec <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">item =</span> item_names,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">model =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">&quot;2PL&quot;</span>, <span class="dv">10</span>), <span class="fu">rep</span>(<span class="st">&quot;GRM&quot;</span>, <span class="dv">5</span>), <span class="fu">rep</span>(<span class="st">&quot;2PLT&quot;</span>, <span class="dv">2</span>), <span class="fu">rep</span>(<span class="st">&quot;GPCMT&quot;</span>, <span class="dv">3</span>)),</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">testlet =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="dv">15</span>), <span class="fu">rep</span>(<span class="st">&quot;testlet1&quot;</span>, <span class="dv">2</span>), <span class="fu">rep</span>(<span class="st">&quot;testlet2&quot;</span>, <span class="dv">3</span>)),</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#view the spec</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">print</span>(spec)</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt;       item model  testlet</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 1   Item_1   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; 2   Item_2   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; 3   Item_3   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt; 4   Item_4   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; 5   Item_5   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; 6   Item_6   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; 7   Item_7   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; 8   Item_8   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 9   Item_9   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 10 Item_10   2PL     &lt;NA&gt;</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt; 11 Item_11   GRM     &lt;NA&gt;</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 12 Item_12   GRM     &lt;NA&gt;</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 13 Item_13   GRM     &lt;NA&gt;</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 14 Item_14   GRM     &lt;NA&gt;</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; 15 Item_15   GRM     &lt;NA&gt;</span></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 16 Item_16  2PLT testlet1</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 17 Item_17  2PLT testlet1</span></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt; 18 Item_18 GPCMT testlet2</span></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; 19 Item_19 GPCMT testlet2</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 20 Item_20 GPCMT testlet2</span></span></code></pre></div>
+<p><strong>5.3. Step 3: Run Estimation</strong></p>
+<p>We run the estimation. The function automatically detects that “T1”
+items share a nuisance dimension (Gamma) while the others depend only on
+Theta.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Run the Universal Function</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">irt_trt</span>(sim_data, spec, <span class="at">method =</span> <span class="st">&quot;EM&quot;</span>, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">max_iter=</span><span class="dv">50</span>, <span class="at">verbose=</span><span class="cn">TRUE</span>))</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; ================================================</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;         UNIVERSAL IRT/TRT ESTIMATION            </span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; ================================================</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Data Summary:</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt;   - Total Items: 20</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt;   - Binary Items: 12</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt;   - Polytomous Items: 8</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; Structure:</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt;   - Independent Items: 15</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt;   - Testlet Items: 5 (grouped into 2 testlets)</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; </span><span class="al">NOTE</span><span class="co"> on Testlets:</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt;   Any item with a value in the &#39;testlet&#39; string within the item_spec statement will be estimated</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt;   as a Testlet item (Theta + Gamma), regardless of the model string.</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt;   (e.g., model=&#39;GPCM&#39; + testlet=&#39;T1&#39; -&gt; Testlet GPCT).</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; ------------------------------------------------</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; Data: 1000 Persons, 20 Items, 2 Testlets</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; ------------------------------------------------</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; Starting Estimation Loop...</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt; Iter   1 | LogLik:  -14918.96 | Max Change: 1.25812    Iter   2 | LogLik:  -14004.14 | Max Change: 0.14006    Iter   3 | LogLik:  -13988.50 | Max Change: 0.05962    Iter   4 | LogLik:  -13979.68 | Max Change: 0.03897    Iter   5 | LogLik:  -13973.19 | Max Change: 0.02922    Iter   6 | LogLik:  -13968.36 | Max Change: 0.02305    Iter   7 | LogLik:  -13964.75 | Max Change: 0.01837    Iter   8 | LogLik:  -13962.04 | Max Change: 0.01476    Iter   9 | LogLik:  -13959.98 | Max Change: 0.01190    Iter  10 | LogLik:  -13958.41 | Max Change: 0.00966    Iter  11 | LogLik:  -13957.20 | Max Change: 0.00791    Iter  12 | LogLik:  -13956.26 | Max Change: 0.00648    Iter  13 | LogLik:  -13955.53 | Max Change: 0.00534    Iter  14 | LogLik:  -13954.95 | Max Change: 0.00440    Iter  15 | LogLik:  -13954.50 | Max Change: 0.00361    Iter  16 | LogLik:  -13954.13 | Max Change: 0.00298    Iter  17 | LogLik:  -13953.84 | Max Change: 0.00245    Iter  18 | LogLik:  -13953.61 | Max Change: 0.00202    Iter  19 | LogLik:  -13953.42 | Max Change: 0.00168    Iter  20 | LogLik:  -13953.27 | Max Change: 0.00139    Iter  21 | LogLik:  -13953.15 | Max Change: 0.00114    Iter  22 | LogLik:  -13953.04 | Max Change: 0.00095    Iter  23 | LogLik:  -13952.96 | Max Change: 0.00076    Iter  24 | LogLik:  -13952.90 | Max Change: 0.00065    Iter  25 | LogLik:  -13952.84 | Max Change: 0.00054    Iter  26 | LogLik:  -13952.80 | Max Change: 0.00045    Iter  27 | LogLik:  -13952.76 | Max Change: 0.00038    Iter  28 | LogLik:  -13952.73 | Max Change: 0.00030    Iter  29 | LogLik:  -13952.71 | Max Change: 0.00025    Iter  30 | LogLik:  -13952.69 | Max Change: 0.00021    Iter  31 | LogLik:  -13952.67 | Max Change: 0.00018    Iter  32 | LogLik:  -13952.66 | Max Change: 0.00018    Iter  33 | LogLik:  -13952.64 | Max Change: 0.00015    Iter  34 | LogLik:  -13952.64 | Max Change: 0.00013    Iter  35 | LogLik:  -13952.63 | Max Change: 0.00010    </span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt; &gt;&gt;&gt; Convergence Confirmation: Model Converged!</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt; ------------------------------------------------</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a><span class="co">#&gt; Estimating Final Person Parameters (Theta)...</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a><span class="co">#&gt; Using Theta range: [-4.0, 4.0]. Adjust via control=list(theta_range=c(...)).</span></span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a><span class="co">#&gt; Estimating Testlet Effects (Gamma) per person...</span></span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a><span class="co">#&gt; All parameters estimated. Formatting results...</span></span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a><span class="co">#&gt; All completed. You can view the results now.</span></span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a><span class="co">#&gt; ================================================</span></span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a></span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a><span class="co"># Save Results</span></span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a>item_par<span class="ot">=</span>results<span class="sc">$</span>item_params</span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a>fit<span class="ot">=</span>results<span class="sc">$</span>model_fit</span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a>person_par<span class="ot">=</span>results<span class="sc">$</span>person_params</span></code></pre></div>
+<p><strong>6. Fixed Parameter Calibration</strong></p>
+<p>In equating scenarios or computer-adaptive testing, we often need to
+estimate one set of parameters while holding the other fixed.</p>
+<p><strong>6.1 Fixed Item Calibration (Estimating Person
+Ability)</strong></p>
+<p>If we know the item parameters (e.g., from an item bank), we can
+estimate person ability. Below we first simulate items, including some
+items have “known parameters” and some items are “new items”.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># --- 1. Simulation Helper Functions ---</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co"># Function to simulate Binary 2PL</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>sim_2pl <span class="ot">&lt;-</span> <span class="cf">function</span>(theta, a, b) {</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  D <span class="ot">&lt;-</span> <span class="fl">1.7</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  prob <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>D <span class="sc">*</span> a <span class="sc">*</span> (theta <span class="sc">-</span> b)))</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  resp <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">runif</span>(<span class="fu">length</span>(theta)) <span class="sc">&lt;</span> prob, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="fu">return</span>(resp)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>}</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co"># Function to simulate Polytomous (GPCM structure to match fixed_item logic)</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>sim_poly <span class="ot">&lt;-</span> <span class="cf">function</span>(theta, a, steps) {</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  n_cat <span class="ot">&lt;-</span> <span class="fu">length</span>(steps) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  n_stud <span class="ot">&lt;-</span> <span class="fu">length</span>(theta)</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  </span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="co"># Calculate numerators for categories 0, 1, 2...</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="co"># P(k) proportional to exp( sum(a*(theta - step_j)) )</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  </span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  probs <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> n_stud, <span class="at">ncol =</span> n_cat)</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>  probs[, <span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># Reference category (unnormalized exp is 1 or e^0)</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>  </span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>  current_sum <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>  <span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>n_cat) {</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>    <span class="co"># Step parameters correspond to boundaries</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>    current_sum <span class="ot">&lt;-</span> current_sum <span class="sc">+</span> a <span class="sc">*</span> (theta <span class="sc">-</span> steps[k<span class="dv">-1</span>])</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>    probs[, k] <span class="ot">&lt;-</span> <span class="fu">exp</span>(current_sum)</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>  }</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>  </span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>  <span class="co"># Normalize</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>  prob_sum <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(probs)</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>  probs_final <span class="ot">&lt;-</span> probs <span class="sc">/</span> prob_sum</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>  </span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>  <span class="co"># Random draw</span></span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>  resp <span class="ot">&lt;-</span> <span class="fu">numeric</span>(n_stud)</span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_stud) {</span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>    resp[i] <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">0</span><span class="sc">:</span>(n_cat<span class="dv">-1</span>), <span class="dv">1</span>, <span class="at">prob =</span> probs_final[i, ])</span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a>  }</span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a>  <span class="fu">return</span>(resp)</span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a>}</span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a></span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co"># --- 2. Generate Parameters for 50 Items ---</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a></span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a>n_students <span class="ot">&lt;-</span> <span class="dv">5497</span></span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a>true_theta <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_students, <span class="at">mean =</span> <span class="fl">0.4</span>, <span class="at">sd =</span> <span class="fl">1.7</span>)</span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a></span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a>all_items_meta <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a>response_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="at">nrow =</span> n_students, <span class="at">ncol =</span> <span class="dv">50</span>)</span>
+<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a><span class="fu">colnames</span>(response_matrix) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Item_&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">50</span>)</span>
+<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a></span>
+<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a><span class="co"># --- Set 1: Known Dichotomous (Items 1-10) ---</span></span>
+<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a><span class="co"># Model: 2PL</span></span>
+<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) {</span>
+<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">1</span>, <span class="fl">0.8</span>, <span class="fl">1.4</span>)</span>
+<span id="cb9-54"><a href="#cb9-54" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb9-55"><a href="#cb9-55" tabindex="-1"></a>  resp <span class="ot">&lt;-</span> <span class="fu">sim_2pl</span>(true_theta, a, b)</span>
+<span id="cb9-56"><a href="#cb9-56" tabindex="-1"></a>  response_matrix[, i] <span class="ot">&lt;-</span> resp</span>
+<span id="cb9-57"><a href="#cb9-57" tabindex="-1"></a>  all_items_meta[[i]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">item =</span> <span class="fu">colnames</span>(response_matrix)[i], <span class="at">type =</span> <span class="st">&quot;Known&quot;</span>, <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>, <span class="at">a =</span> a, <span class="at">b =</span> b)</span>
+<span id="cb9-58"><a href="#cb9-58" tabindex="-1"></a>}</span>
+<span id="cb9-59"><a href="#cb9-59" tabindex="-1"></a></span>
+<span id="cb9-60"><a href="#cb9-60" tabindex="-1"></a><span class="co"># --- Set 2: Known Polytomous (Items 11-18) ---</span></span>
+<span id="cb9-61"><a href="#cb9-61" tabindex="-1"></a><span class="co"># Model: Poly (3 categories: 0, 1, 2). Requires 2 steps (d1, d2).</span></span>
+<span id="cb9-62"><a href="#cb9-62" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">11</span><span class="sc">:</span><span class="dv">18</span>) {</span>
+<span id="cb9-63"><a href="#cb9-63" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">1</span>, <span class="fl">0.7</span>, <span class="fl">1.2</span>)</span>
+<span id="cb9-64"><a href="#cb9-64" tabindex="-1"></a>  d1 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.3</span>)</span>
+<span id="cb9-65"><a href="#cb9-65" tabindex="-1"></a>  d2 <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>) <span class="co"># Steps usually ordered</span></span>
+<span id="cb9-66"><a href="#cb9-66" tabindex="-1"></a>  resp <span class="ot">&lt;-</span> <span class="fu">sim_poly</span>(true_theta, a, <span class="fu">c</span>(d1, d2))</span>
+<span id="cb9-67"><a href="#cb9-67" tabindex="-1"></a>  response_matrix[, i] <span class="ot">&lt;-</span> resp</span>
+<span id="cb9-68"><a href="#cb9-68" tabindex="-1"></a>  all_items_meta[[i]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">item =</span> <span class="fu">colnames</span>(response_matrix)[i], <span class="at">type =</span> <span class="st">&quot;Known&quot;</span>, <span class="at">model =</span> <span class="st">&quot;Poly&quot;</span>, <span class="at">a =</span> a, <span class="at">d1 =</span> d1, <span class="at">d2 =</span> d2)</span>
+<span id="cb9-69"><a href="#cb9-69" tabindex="-1"></a>}</span>
+<span id="cb9-70"><a href="#cb9-70" tabindex="-1"></a></span>
+<span id="cb9-71"><a href="#cb9-71" tabindex="-1"></a><span class="co"># --- Set 3: Unknown Dichotomous (Items 19-40) ---</span></span>
+<span id="cb9-72"><a href="#cb9-72" tabindex="-1"></a><span class="co"># 22 Items</span></span>
+<span id="cb9-73"><a href="#cb9-73" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">19</span><span class="sc">:</span><span class="dv">40</span>) {</span>
+<span id="cb9-74"><a href="#cb9-74" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">1</span>, <span class="fl">0.8</span>, <span class="fl">1.4</span>)</span>
+<span id="cb9-75"><a href="#cb9-75" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb9-76"><a href="#cb9-76" tabindex="-1"></a>  resp <span class="ot">&lt;-</span> <span class="fu">sim_2pl</span>(true_theta, a, b)</span>
+<span id="cb9-77"><a href="#cb9-77" tabindex="-1"></a>  response_matrix[, i] <span class="ot">&lt;-</span> resp</span>
+<span id="cb9-78"><a href="#cb9-78" tabindex="-1"></a>  all_items_meta[[i]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">item =</span> <span class="fu">colnames</span>(response_matrix)[i], <span class="at">type =</span> <span class="st">&quot;Unknown&quot;</span>, <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>, <span class="at">a =</span> a, <span class="at">b =</span> b)</span>
+<span id="cb9-79"><a href="#cb9-79" tabindex="-1"></a>}</span>
+<span id="cb9-80"><a href="#cb9-80" tabindex="-1"></a></span>
+<span id="cb9-81"><a href="#cb9-81" tabindex="-1"></a><span class="co"># --- Set 4: Unknown Polytomous (Items 41-50) ---</span></span>
+<span id="cb9-82"><a href="#cb9-82" tabindex="-1"></a><span class="co"># 10 Items (Varying categories: some 3 cat, some 4 cat)</span></span>
+<span id="cb9-83"><a href="#cb9-83" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">41</span><span class="sc">:</span><span class="dv">50</span>) {</span>
+<span id="cb9-84"><a href="#cb9-84" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">1</span>, <span class="fl">0.7</span>, <span class="fl">1.2</span>)</span>
+<span id="cb9-85"><a href="#cb9-85" tabindex="-1"></a>  <span class="co"># Mix of 3 categories (2 steps) and 4 categories (3 steps)</span></span>
+<span id="cb9-86"><a href="#cb9-86" tabindex="-1"></a>  <span class="cf">if</span> (i <span class="sc">%%</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb9-87"><a href="#cb9-87" tabindex="-1"></a>    steps <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.8</span>, <span class="dv">0</span>, <span class="fl">0.8</span>) <span class="co"># 4 cats</span></span>
+<span id="cb9-88"><a href="#cb9-88" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb9-89"><a href="#cb9-89" tabindex="-1"></a>    steps <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span>)    <span class="co"># 3 cats</span></span>
+<span id="cb9-90"><a href="#cb9-90" tabindex="-1"></a>  }</span>
+<span id="cb9-91"><a href="#cb9-91" tabindex="-1"></a>  resp <span class="ot">&lt;-</span> <span class="fu">sim_poly</span>(true_theta, a, steps)</span>
+<span id="cb9-92"><a href="#cb9-92" tabindex="-1"></a>  response_matrix[, i] <span class="ot">&lt;-</span> resp</span>
+<span id="cb9-93"><a href="#cb9-93" tabindex="-1"></a>  all_items_meta[[i]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">item =</span> <span class="fu">colnames</span>(response_matrix)[i], <span class="at">type =</span> <span class="st">&quot;Unknown&quot;</span>, <span class="at">model =</span> <span class="st">&quot;Poly&quot;</span>, <span class="at">a =</span> a, <span class="at">steps =</span> steps)</span>
+<span id="cb9-94"><a href="#cb9-94" tabindex="-1"></a>}</span>
+<span id="cb9-95"><a href="#cb9-95" tabindex="-1"></a><span class="co">#check</span></span>
+<span id="cb9-96"><a href="#cb9-96" tabindex="-1"></a>response_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(response_matrix)</span>
+<span id="cb9-97"><a href="#cb9-97" tabindex="-1"></a><span class="fu">head</span>(response_df[, <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="dv">11</span><span class="sc">:</span><span class="dv">13</span>, <span class="dv">41</span><span class="sc">:</span><span class="dv">43</span>)]) <span class="co"># Peak at data</span></span>
+<span id="cb9-98"><a href="#cb9-98" tabindex="-1"></a><span class="co">#&gt;   Item_1 Item_2 Item_3 Item_11 Item_12 Item_13 Item_41 Item_42 Item_43</span></span>
+<span id="cb9-99"><a href="#cb9-99" tabindex="-1"></a><span class="co">#&gt; 1      1      0      1       0       2       1       0       0       0</span></span>
+<span id="cb9-100"><a href="#cb9-100" tabindex="-1"></a><span class="co">#&gt; 2      0      0      0       0       0       0       1       0       1</span></span>
+<span id="cb9-101"><a href="#cb9-101" tabindex="-1"></a><span class="co">#&gt; 3      1      0      1       1       1       1       2       1       2</span></span>
+<span id="cb9-102"><a href="#cb9-102" tabindex="-1"></a><span class="co">#&gt; 4      0      0      0       0       0       0       1       0       0</span></span>
+<span id="cb9-103"><a href="#cb9-103" tabindex="-1"></a><span class="co">#&gt; 5      1      0      0       1       2       2       1       1       1</span></span>
+<span id="cb9-104"><a href="#cb9-104" tabindex="-1"></a><span class="co">#&gt; 6      1      0      0       0       1       2       1       1       0</span></span></code></pre></div>
+<p>Then we create a necessary data structure for the next calibration
+step. In this step, we need to specify known item with corresponding
+parameters.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Create empty dataframe structure</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>known_params_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">item =</span> <span class="fu">character</span>(),</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">model =</span> <span class="fu">character</span>(),</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">a =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">b =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">d1 =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="at">d2 =</span> <span class="fu">numeric</span>(),</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>)</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co"># Populate with Known Items (1-18)</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">18</span>) {</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  meta <span class="ot">&lt;-</span> all_items_meta[[i]]</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  </span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  <span class="cf">if</span> (meta<span class="sc">$</span>model <span class="sc">==</span> <span class="st">&quot;2PL&quot;</span>) {</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="co"># Add row for Binary</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>    known_params_df <span class="ot">&lt;-</span> <span class="fu">rbind</span>(known_params_df, <span class="fu">data.frame</span>(</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>      <span class="at">item =</span> meta<span class="sc">$</span>item,</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>      <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>,</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>      <span class="at">a =</span> meta<span class="sc">$</span>a,</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>      <span class="at">b =</span> meta<span class="sc">$</span>b,</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>      <span class="at">d1 =</span> <span class="cn">NA</span>, <span class="at">d2 =</span> <span class="cn">NA</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>    ))</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>    <span class="co"># Add row for Poly</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>    <span class="co"># Note: Using &quot;GPCM&quot; model string as our function uses GPCM math</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>    known_params_df <span class="ot">&lt;-</span> <span class="fu">rbind</span>(known_params_df, <span class="fu">data.frame</span>(</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>      <span class="at">item =</span> meta<span class="sc">$</span>item,</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>      <span class="at">model =</span> <span class="st">&quot;GPCM&quot;</span>, </span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>      <span class="at">a =</span> meta<span class="sc">$</span>a,</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>      <span class="at">b =</span> <span class="cn">NA</span>,</span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>      <span class="at">d1 =</span> meta<span class="sc">$</span>d1,</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>      <span class="at">d2 =</span> meta<span class="sc">$</span>d2</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a>    ))</span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a>  }</span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a>}</span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a></span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a><span class="co"># Display input to verify</span></span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a><span class="fu">print</span>(<span class="st">&quot;Known Item Parameters Input:&quot;</span>)</span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Known Item Parameters Input:&quot;</span></span>
+<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a><span class="fu">print</span>(known_params_df)</span>
+<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a><span class="co">#&gt;       item model         a          b          d1         d2</span></span>
+<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a><span class="co">#&gt; 1   Item_1   2PL 1.0287464 -0.9197240          NA         NA</span></span>
+<span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a><span class="co">#&gt; 2   Item_2   2PL 1.0048075  1.2354626          NA         NA</span></span>
+<span id="cb10-46"><a href="#cb10-46" tabindex="-1"></a><span class="co">#&gt; 3   Item_3   2PL 0.9183354  0.6649479          NA         NA</span></span>
+<span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a><span class="co">#&gt; 4   Item_4   2PL 1.2716232 -1.1443195          NA         NA</span></span>
+<span id="cb10-48"><a href="#cb10-48" tabindex="-1"></a><span class="co">#&gt; 5   Item_5   2PL 0.9924154  0.7640520          NA         NA</span></span>
+<span id="cb10-49"><a href="#cb10-49" tabindex="-1"></a><span class="co">#&gt; 6   Item_6   2PL 1.1279951  0.9675910          NA         NA</span></span>
+<span id="cb10-50"><a href="#cb10-50" tabindex="-1"></a><span class="co">#&gt; 7   Item_7   2PL 1.2603260  0.2995644          NA         NA</span></span>
+<span id="cb10-51"><a href="#cb10-51" tabindex="-1"></a><span class="co">#&gt; 8   Item_8   2PL 1.2943065  1.2325874          NA         NA</span></span>
+<span id="cb10-52"><a href="#cb10-52" tabindex="-1"></a><span class="co">#&gt; 9   Item_9   2PL 1.3738451 -1.7190245          NA         NA</span></span>
+<span id="cb10-53"><a href="#cb10-53" tabindex="-1"></a><span class="co">#&gt; 10 Item_10   2PL 1.0130638 -1.1422731          NA         NA</span></span>
+<span id="cb10-54"><a href="#cb10-54" tabindex="-1"></a><span class="co">#&gt; 11 Item_11  GPCM 1.1950806         NA  0.07845972 0.74138298</span></span>
+<span id="cb10-55"><a href="#cb10-55" tabindex="-1"></a><span class="co">#&gt; 12 Item_12  GPCM 1.1169482         NA -0.50576871 0.32892965</span></span>
+<span id="cb10-56"><a href="#cb10-56" tabindex="-1"></a><span class="co">#&gt; 13 Item_13  GPCM 1.1917066         NA -0.27650908 0.51124636</span></span>
+<span id="cb10-57"><a href="#cb10-57" tabindex="-1"></a><span class="co">#&gt; 14 Item_14  GPCM 0.9595820         NA -0.37947396 0.22564038</span></span>
+<span id="cb10-58"><a href="#cb10-58" tabindex="-1"></a><span class="co">#&gt; 15 Item_15  GPCM 0.9219541         NA -0.14945831 0.44633887</span></span>
+<span id="cb10-59"><a href="#cb10-59" tabindex="-1"></a><span class="co">#&gt; 16 Item_16  GPCM 0.9264782         NA -0.59867093 0.03966326</span></span>
+<span id="cb10-60"><a href="#cb10-60" tabindex="-1"></a><span class="co">#&gt; 17 Item_17  GPCM 0.9225556         NA -0.70413230 0.71069682</span></span>
+<span id="cb10-61"><a href="#cb10-61" tabindex="-1"></a><span class="co">#&gt; 18 Item_18  GPCM 1.0801744         NA -0.09153471 1.07061113</span></span></code></pre></div>
+<p>Finally, we can conduct a fiex-item calibration and check the final
+results.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Run the calibration</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co"># We set model_default = &quot;2PL&quot; (this applies to unknown binary items).</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co"># The function automatically detects poly items in the unknown set based on response categories.</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">fixed_item</span>(</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">response_df =</span> response_df, </span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">item_params_df =</span> known_params_df,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">max_iter =</span> <span class="dv">100</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; ---------------------------------------------------------</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; Starting Fixed Item Calibration...</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; ---------------------------------------------------------</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; Inferred Unknown Binary: 2PL</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; Inferred Unknown Poly:   GPCM</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt; Cycle 1: LogLik = -144716.33, Change = Inf</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co">#&gt; Cycle 2: LogLik = -142757.17, Change = 1959.1556</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co">#&gt; Cycle 3: LogLik = -142546.08, Change = 211.0919</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="co">#&gt; Cycle 4: LogLik = -142456.85, Change = 89.2311</span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a><span class="co">#&gt; Cycle 5: LogLik = -142416.96, Change = 39.8897</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co">#&gt; Cycle 6: LogLik = -142398.92, Change = 18.0392</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt; Cycle 7: LogLik = -142390.71, Change = 8.2095</span></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="co">#&gt; Cycle 8: LogLik = -142386.96, Change = 3.7538</span></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co">#&gt; Cycle 9: LogLik = -142385.24, Change = 1.7196</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="co">#&gt; Cycle 10: LogLik = -142384.45, Change = 0.7895</span></span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="co">#&gt; Cycle 11: LogLik = -142384.08, Change = 0.3636</span></span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="co">#&gt; Cycle 12: LogLik = -142383.92, Change = 0.1672</span></span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="co">#&gt; Cycle 13: LogLik = -142383.84, Change = 0.0768</span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="co">#&gt; Cycle 14: LogLik = -142383.80, Change = 0.0357</span></span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a><span class="co">#&gt; Cycle 15: LogLik = -142383.79, Change = 0.0165</span></span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a><span class="co">#&gt; Cycle 16: LogLik = -142383.78, Change = 0.0075</span></span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a><span class="co">#&gt; Cycle 17: LogLik = -142383.78, Change = 0.0035</span></span>
+<span id="cb11-31"><a href="#cb11-31" tabindex="-1"></a><span class="co">#&gt; Estimating Person Parameters...</span></span>
+<span id="cb11-32"><a href="#cb11-32" tabindex="-1"></a><span class="co">#&gt; ---------------------------------------------------------</span></span>
+<span id="cb11-33"><a href="#cb11-33" tabindex="-1"></a><span class="co">#&gt; Process Complete. You can view results now.</span></span>
+<span id="cb11-34"><a href="#cb11-34" tabindex="-1"></a></span>
+<span id="cb11-35"><a href="#cb11-35" tabindex="-1"></a><span class="co"># Check that Items 1-18 are &quot;Fixed&quot; and match inputs.</span></span>
+<span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a><span class="co"># Check that Items 19-50 are &quot;Estimated&quot;.</span></span>
+<span id="cb11-37"><a href="#cb11-37" tabindex="-1"></a><span class="co"># Note how Poly items have step_1, step_2, etc.</span></span>
+<span id="cb11-38"><a href="#cb11-38" tabindex="-1"></a>item<span class="ot">=</span>results<span class="sc">$</span>item_params</span>
+<span id="cb11-39"><a href="#cb11-39" tabindex="-1"></a>person<span class="ot">=</span>results<span class="sc">$</span>person_params</span>
+<span id="cb11-40"><a href="#cb11-40" tabindex="-1"></a>fit<span class="ot">=</span>results<span class="sc">$</span>model_fit</span></code></pre></div>
+<p><strong>6.2 Fixed Person Calibration (Estimating Item
+Difficulty)</strong></p>
+<p>Conversely, if we have known person abilities, we can calibrate new
+items. In this estimation, you can also choose to model a covariate if
+you believe that is releated to your latent variables. If not specified,
+then there will be no covariate in the modeling process.</p>
+<p>The final output also contains some classic item statistics such as
+p-values and mean of item scores.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># --- Example: With Package Data ---</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;ela1&quot;</span>, <span class="at">package =</span> <span class="st">&quot;tirt&quot;</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co"># Select Item Responses (Cols 1-30)</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>df_real <span class="ot">&lt;-</span> ela1[, <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>]</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>fixed_theta <span class="ot">&lt;-</span> ela1<span class="sc">$</span>THETA</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>fixed_cov <span class="ot">&lt;-</span> ela1<span class="sc">$</span>COVARIATE</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>real_res <span class="ot">&lt;-</span> <span class="fu">fix_person</span>(<span class="at">df =</span> df_real,</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>                            <span class="at">theta =</span> fixed_theta,</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>                            <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>                            <span class="at">covariate =</span> fixed_cov)</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="fu">head</span>(real_res)</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;    item discrimination discrimination_se discrimination_zvalue</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt; 1 ITEM1     0.08298835       0.004848405              17.11663</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt; 2 ITEM2     0.08620777       0.005016701              17.18416</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt; 3 ITEM3     0.09418605       0.004894558              19.24301</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; 4 ITEM4     0.18985935       0.009693893              19.58546</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; 5 ITEM5     0.21869224       0.011528756              18.96928</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; 6 ITEM6     0.03696713       0.006730610               5.49239</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt;   discrimination_Pr_z  difficulty difficulty_se difficulty_zvalue</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt; 1        1.115533e-65  -0.8287487     0.1058117         -7.832297</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt; 2        3.489877e-66  -7.4745653     0.3911856        -19.107464</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt; 3        1.615391e-82  -3.9376999     0.1807591        -21.784239</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt; 4        2.057399e-85 -13.2792707     0.6164795        -21.540489</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt; 5        3.060479e-80 -13.1473999     0.6265239        -20.984675</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt; 6        3.965314e-08 -25.0506752     4.4253213         -5.660759</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#&gt;   difficulty_Pr_z    covariate covariate_se covariate_zvalue covariate_Pr_z</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#&gt; 1    4.884981e-15 -0.001330397 0.0003265024        -4.074693    4.60751e-05</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="co">#&gt; 2    0.000000e+00 -0.001330397 0.0003265024        -4.074693    4.60751e-05</span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co">#&gt; 3    0.000000e+00 -0.001330397 0.0003265024        -4.074693    4.60751e-05</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#&gt; 4    0.000000e+00 -0.001330397 0.0003265024        -4.074693    4.60751e-05</span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#&gt; 5    0.000000e+00 -0.001330397 0.0003265024        -4.074693    4.60751e-05</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#&gt; 6    1.507053e-08 -0.001330397 0.0003265024        -4.074693    4.60751e-05</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#&gt;      pvalue number correlation mean_theta mean_covariate</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co">#&gt; 1 0.4983116  52417  0.07441120 -0.9305780      -1.196020</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="co">#&gt; 2 0.6370262  52417  0.07473806 -0.9305780      -1.196020</span></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co">#&gt; 3 0.5702539  52417  0.08380568 -0.9305780      -1.196020</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co">#&gt; 4 0.9100940  39063  0.09939991 -0.8452539      -1.197829</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a><span class="co">#&gt; 5 0.9331212  36454  0.09975399 -0.8022383      -1.185759</span></span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="co">#&gt; 6 0.7106403  34642  0.02892981 -0.7638062      -1.167999</span></span></code></pre></div>
+<p><strong>7. Equating / Linking</strong></p>
+<p><strong>equate_irt</strong> links two scales (Form X and Form Y)
+using common anchor items.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Create dummy parameters for Form X (Base)</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>base_params <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">item =</span> <span class="fu">c</span>(<span class="st">&quot;Item1&quot;</span>, <span class="st">&quot;Item2&quot;</span>, <span class="st">&quot;Item3&quot;</span>, <span class="st">&quot;Item4&quot;</span>, <span class="st">&quot;Item5&quot;</span>),</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">a =</span> <span class="fu">c</span>(<span class="fl">1.0</span>, <span class="fl">1.2</span>, <span class="fl">0.9</span>, <span class="fl">1.1</span>, <span class="fl">1.0</span>),</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">b =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">1.0</span>, <span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.0</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>)</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co"># Create dummy parameters for Form Y (New)</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co"># Suppose Form Y is harder and has different discrimination scaling</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>new_params <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="at">item =</span> <span class="fu">c</span>(<span class="st">&quot;Item1&quot;</span>, <span class="st">&quot;Item2&quot;</span>, <span class="st">&quot;Item3&quot;</span>, <span class="st">&quot;Item6&quot;</span>, <span class="st">&quot;Item7&quot;</span>), <span class="co"># Items 1-3 are anchors</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="at">a =</span> <span class="fu">c</span>(<span class="fl">1.0</span>, <span class="fl">1.2</span>, <span class="fl">0.9</span>, <span class="fl">1.1</span>, <span class="fl">1.0</span>) <span class="sc">/</span> <span class="fl">0.9</span>,  <span class="co"># Scale shift</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>  <span class="at">b =</span> (<span class="fu">c</span>(<span class="sc">-</span><span class="fl">1.0</span>, <span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.0</span>, <span class="fl">0.8</span>, <span class="fl">1.2</span>) <span class="sc">*</span> <span class="fl">0.9</span>) <span class="sc">+</span> <span class="fl">0.2</span>, <span class="co"># Location shift</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>)</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co"># Perform Equating</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>linked <span class="ot">&lt;-</span> <span class="fu">equate_irt</span>(</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>  <span class="at">base_params =</span> base_params,</span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>  <span class="at">new_params =</span> new_params,</span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>  <span class="at">methods =</span> <span class="fu">c</span>(<span class="st">&quot;Stocking-Lord&quot;</span>, <span class="st">&quot;Mean-Mean&quot;</span>)</span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a>)</span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; ---------------------------------------------------------</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt; Starting IRT Equating / Linking</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a><span class="co">#&gt; ---------------------------------------------------------</span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a><span class="co">#&gt; Methods selected: Stocking-Lord, Mean-Mean</span></span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a><span class="co">#&gt; Models detected: 2PL</span></span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="co">#&gt; Items detected: Base = 5 | New = 5</span></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a><span class="co">#&gt; Anchor items detected: 3</span></span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a><span class="co">#&gt; Anchor IDs: Item1, Item2, Item3</span></span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a><span class="co">#&gt; Estimating constants: Mean-Mean...</span></span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a><span class="co">#&gt; Estimating constants: Stocking-Lord (TCC Optimization)...</span></span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a><span class="co">#&gt; Transforming parameters...</span></span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a><span class="co">#&gt; Equating completed.</span></span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a><span class="co">#&gt; ---------------------------------------------------------</span></span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a></span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="co"># View Linking Constants (A and B)</span></span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a><span class="fu">print</span>(linked<span class="sc">$</span>linking_constants)</span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a><span class="co">#&gt;          Method        A          B</span></span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a><span class="co">#&gt; 1     Mean-Mean 0.900000 -0.2750000</span></span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1"></a><span class="co">#&gt; 2 Stocking-Lord 1.111111 -0.2222221</span></span>
+<span id="cb13-45"><a href="#cb13-45" tabindex="-1"></a></span>
+<span id="cb13-46"><a href="#cb13-46" tabindex="-1"></a><span class="co"># View Transformed Parameters for Form Y (put on Form X scale)</span></span>
+<span id="cb13-47"><a href="#cb13-47" tabindex="-1"></a><span class="fu">print</span>(linked<span class="sc">$</span>transformed_item_params)</span>
+<span id="cb13-48"><a href="#cb13-48" tabindex="-1"></a><span class="co">#&gt;     item anchor_status        method model discrimination discrimination_se</span></span>
+<span id="cb13-49"><a href="#cb13-49" tabindex="-1"></a><span class="co">#&gt; 1  Item1        Anchor     Mean-Mean   2PL      1.2345679                NA</span></span>
+<span id="cb13-50"><a href="#cb13-50" tabindex="-1"></a><span class="co">#&gt; 2  Item2        Anchor     Mean-Mean   2PL      1.4814815                NA</span></span>
+<span id="cb13-51"><a href="#cb13-51" tabindex="-1"></a><span class="co">#&gt; 3  Item3        Anchor     Mean-Mean   2PL      1.1111111                NA</span></span>
+<span id="cb13-52"><a href="#cb13-52" tabindex="-1"></a><span class="co">#&gt; 4  Item6           New     Mean-Mean   2PL      1.3580247                NA</span></span>
+<span id="cb13-53"><a href="#cb13-53" tabindex="-1"></a><span class="co">#&gt; 5  Item7           New     Mean-Mean   2PL      1.2345679                NA</span></span>
+<span id="cb13-54"><a href="#cb13-54" tabindex="-1"></a><span class="co">#&gt; 6  Item1        Anchor Stocking-Lord   2PL      0.9999997                NA</span></span>
+<span id="cb13-55"><a href="#cb13-55" tabindex="-1"></a><span class="co">#&gt; 7  Item2        Anchor Stocking-Lord   2PL      1.1999997                NA</span></span>
+<span id="cb13-56"><a href="#cb13-56" tabindex="-1"></a><span class="co">#&gt; 8  Item3        Anchor Stocking-Lord   2PL      0.8999998                NA</span></span>
+<span id="cb13-57"><a href="#cb13-57" tabindex="-1"></a><span class="co">#&gt; 9  Item6           New Stocking-Lord   2PL      1.0999997                NA</span></span>
+<span id="cb13-58"><a href="#cb13-58" tabindex="-1"></a><span class="co">#&gt; 10 Item7           New Stocking-Lord   2PL      0.9999997                NA</span></span>
+<span id="cb13-59"><a href="#cb13-59" tabindex="-1"></a><span class="co">#&gt;       difficulty difficulty_se guessing guessing_se</span></span>
+<span id="cb13-60"><a href="#cb13-60" tabindex="-1"></a><span class="co">#&gt; 1  -9.050000e-01            NA        0          NA</span></span>
+<span id="cb13-61"><a href="#cb13-61" tabindex="-1"></a><span class="co">#&gt; 2  -5.000000e-01            NA        0          NA</span></span>
+<span id="cb13-62"><a href="#cb13-62" tabindex="-1"></a><span class="co">#&gt; 3  -9.500000e-02            NA        0          NA</span></span>
+<span id="cb13-63"><a href="#cb13-63" tabindex="-1"></a><span class="co">#&gt; 4   5.530000e-01            NA        0          NA</span></span>
+<span id="cb13-64"><a href="#cb13-64" tabindex="-1"></a><span class="co">#&gt; 5   8.770000e-01            NA        0          NA</span></span>
+<span id="cb13-65"><a href="#cb13-65" tabindex="-1"></a><span class="co">#&gt; 6  -1.000000e+00            NA        0          NA</span></span>
+<span id="cb13-66"><a href="#cb13-66" tabindex="-1"></a><span class="co">#&gt; 7  -5.000000e-01            NA        0          NA</span></span>
+<span id="cb13-67"><a href="#cb13-67" tabindex="-1"></a><span class="co">#&gt; 8   1.380493e-07            NA        0          NA</span></span>
+<span id="cb13-68"><a href="#cb13-68" tabindex="-1"></a><span class="co">#&gt; 9   8.000003e-01            NA        0          NA</span></span>
+<span id="cb13-69"><a href="#cb13-69" tabindex="-1"></a><span class="co">#&gt; 10  1.200000e+00            NA        0          NA</span></span></code></pre></div>
+<p><strong>8. Final Comment</strong></p>
+<p>The <strong>tirt</strong> package streamlines complex psychometric
+analyses. For detailed documentation on specific functions, please use
+the help command, e.g., <em>?binary_irt</em>.</p>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
