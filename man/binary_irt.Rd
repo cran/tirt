@@ -2,7 +2,7 @@
 % Please edit documentation in R/binaryirt.R
 \name{binary_irt}
 \alias{binary_irt}
-\title{Binary (Dichotomous) Item Response Theory Estimation}
+\title{Binary (Dichotomous) Item Response Theory Estimation Using Likelihood or Bayesian}
 \usage{
 binary_irt(data, model = "2PL", method = "EM", control = list())
 }
@@ -11,7 +11,7 @@ binary_irt(data, model = "2PL", method = "EM", control = list())
 
 \item{model}{String. "Rasch", "2PL" (2-Parameter Logistic), or "3PL" (3-Parameter Logistic).}
 
-\item{method}{String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood).}
+\item{method}{String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood). However, using Bayesian will override the likelihood estimation.}
 
 \item{control}{A \code{list} of control parameters for the estimation algorithm:
 \itemize{
@@ -21,6 +21,15 @@ binary_irt(data, model = "2PL", method = "EM", control = list())
 grid bounds (default = c(-4, 4)).
 \item \code{quad_points}: Number of quadrature points (default = 21).
 \item \code{verbose}: Logical; if \code{TRUE}, prints progress to console.
+\item \code{prior}: A list specifying prior distributions or fixed values for item parameters. Default is NULL (no priors).
+For Rasch: \code{list(b = value)} or \code{list(b = function(x) dnorm(x, 0, 1, log=TRUE))}.
+For 2PL: \code{list(a = ..., b = ...)}.
+For 3PL: \code{list(a = ..., b = ..., g = ...)}.
+Each parameter can be:
+- A single numeric value (applied to all items)
+- A numeric vector of length k (item-specific fixed values)
+- A function returning log-density (applied to all items)
+- A list of length k with functions or values (item-specific)
 }}
 }
 \value{
@@ -28,13 +37,14 @@ A list containing:
 \itemize{
 \item \code{item_params}: A data frame of estimated item parameters (discrimination, difficulty, guessing) and their standard errors.
 \item \code{person_params}: A data frame of estimated person abilities (theta) and standard errors.
-\item \code{model_fit}: A data frame containing fit statistics such as Akaike’s Information Criterion (AIC), the Bayesian Information Criterion (BIC), and Log-Likelihood.
+\item \code{model_fit}: A data frame containing fit statistics such as Akaike's Information Criterion (AIC), the Bayesian Information Criterion (BIC), and Log-Likelihood.
 \item \code{settings}: A list of control parameters used in the estimation.
 }
 }
 \description{
 Estimates item and person parameters for binary item response models
 using either Marginal Maximum Likelihood or Joint Maximum Likelihood.
+Now supports flexible prior distributions for Bayesian estimation (MAP estimation).
 }
 \examples{
   # # Simulate data
@@ -46,17 +56,33 @@ using either Marginal Maximum Likelihood or Joint Maximum Likelihood.
   data_mat <- matrix(NA, N, J)
   for(i in 1:N) {
     p <- 1 / (1 + exp(-true_a * (true_theta[i] - true_b)))
-   data_mat[i,] <- rbinom(J, 1, p)
+    data_mat[i,] <- rbinom(J, 1, p)
   }
   df <- as.data.frame(data_mat)
   names(df) <- paste0("Q", 1:J)
-  # # Run Function
+
+  # # Run Function without prior
   res <- binary_irt(df, model="2PL", method="EM")
+
+\donttest{
+  # # Run Function with prior (function-based)
+  res_prior <- binary_irt(df, model="2PL", method="EM",
+                          control=list(prior=list(
+                            a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+                            b = function(x) dnorm(x, 0, 2, log=TRUE)
+                          )))
+
+  # # Run Function with fixed value prior
+  res_fixed <- binary_irt(df, model="2PL", method="EM",
+                          control=list(prior=list(
+                            a = 1,  # Fix all discrimination prior to 1
+                            b = function(x) dnorm(x, 0, 2, log=TRUE)
+                          )))
+
   # View Results
   head(res$item_params)
   head(res$person_params)
   print(res$model_fit)
-  \donttest{
   # --- Example 2: With Package Data ---
   data("ela1", package = "tirt")
   # Subset the first 30 columns (must use the object name 'data_binary')

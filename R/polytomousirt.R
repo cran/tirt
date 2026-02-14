@@ -1,13 +1,14 @@
-#' Polytomous Item Response Theory Estimation
+#' Polytomous Item Response Theory Estimation Using Likelihood or Bayesian
 #'
 #' @description
 #' Estimates item and person parameters for polytomous item response theory models
 #' using either Marginal Maximum Likelihood or Joint Maximum Likelihood.
+#' Now supports flexible prior distributions for Bayesian estimation (MAP estimation).
 #'
 #' @param data A N x J data.frame of polytomous responses (0, 1, 2...).
 #'             Missing values should be NA. Categories must be continuous integers.
 #' @param model String. "GPCM" (Generalized Partial Credit Model), "PCM" (Partial Credit Model), or "GRM" (Graded Response Model).
-#' @param method String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood).
+#' @param method String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood). However, using Bayesian will override the likelihood estimation.
 #' @param control A \code{list} of control parameters for the estimation algorithm:
 #'   \itemize{
 #'     \item \code{max_iter}: Maximum number of EM iterations (default = 100).
@@ -16,6 +17,13 @@
 #'           grid bounds (default = c(-4, 4)).
 #'     \item \code{quad_points}: Number of quadrature points (default = 21).
 #'     \item \code{verbose}: Logical; if \code{TRUE}, prints progress to console.
+#'     \item \code{prior}: A list specifying prior distributions for item parameters. Default is NULL (no priors).
+#'       For GRM: \code{list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), d = function(x) dnorm(x, 0, 2, log=TRUE))}.
+#'       For GPCM: \code{list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), d = function(x) dnorm(x, 0, 2, log=TRUE))}.
+#'       For PCM: \code{list(d = function(x) dnorm(x, 0, 2, log=TRUE))}.
+#'       Each prior is a function returning log-density and applies to ALL items.
+#'       Fixed value priors are NOT supported.
+#'       Item-specific priors are NOT supported.
 #'   }
 #'
 #' @return A list containing:
@@ -27,7 +35,7 @@
 #' }
 #' @examples
 #'   # --- Example 1: Simulation (GPCM) ---
-#'   set.seed(2025)
+#'   set.seed(2026)
 #'   N <- 500; J <- 5
 #'   n_cats <- c(3, 4, 3, 5, 4)
 #'
@@ -59,13 +67,23 @@
 #'   }
 #'   df_sim <- as.data.frame(sim_data)
 #'
-#'   # Run Estimation (GPCM to match simulation logic)
+#'   # Run Estimation (GPCM to match simulation logic without prior)
 #'   res <- polytomous_irt(df_sim, model="GPCM", method="EM",
-#'                         control=list(max_iter=20, verbose=FALSE))
+#'                         control=list(max_iter=20, verbose=TRUE))
 #'
 #'   head(res$item_params)
 #'   print(res$model_fit)
+#'
 #'   \donttest{
+#'   # Run Estimation with prior (MAP)
+#'   res_prior <- polytomous_irt(df_sim, model="PCM", method="EM",
+#'                               control=list(max_iter=20, verbose=FALSE,
+#'                                           prior=list(
+#'                                             d = function(x) dnorm(x, 0, 2, log=TRUE)
+#'                                           )))
+#'   head(res$item_params)
+#'   print(res$model_fit)
+#'
 #'   # --- Example 2: With Package Data (GRM) ---
 #'   data("ela1", package = "tirt")
 #'
@@ -74,11 +92,22 @@
 #'
 #'   # Run Estimation using GRM
 #'   real_res <- polytomous_irt(df_poly, model="GRM", method="EM",
-#'                              control = list(max_iter = 10))
+#'                              control = list(max_iter = 1000))
 #'
 #'   head(real_res$item_params)
 #'   head(real_res$person_params)
 #'   print(real_res$model_fit)
+#'   # Run Estimation using GRM with prior
+#'   real_res2 <- polytomous_irt(df_poly, model="GRM", method="EM",
+#'                              control = list(max_iter = 1000,
+#'                                            prior = list(
+#'                                              a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+#'                                              d = function(x) dnorm(x, 0, 2, log=TRUE)
+#'                                            )))
+#'
+#'   head(real_res2$item_params)
+#'   head(real_res2$person_params)
+#'   print(real_res2$model_fit)
 #'   }
 #' @export
 polytomous_irt <- function(data,
@@ -97,6 +126,20 @@ polytomous_irt <- function(data,
     verbose = TRUE
   )
   con[names(control)] <- control
+
+  # Extract prior from control
+  prior <- con$prior
+
+  # Normalize model name to uppercase
+  model <- toupper(model)
+
+  # Define the set of supported models
+  valid_models <- c("GPCM", "PCM", "GRM")
+
+  # Validate that every element in the input vector is within the allowed set
+  if (!all(model %in% valid_models)) {
+    stop("Model must be 'GPCM', 'PCM', or 'GRM' (case-insensitive)")
+  }
 
   # --- Input Validation ---
   if(!is.data.frame(data)) stop("Input must be a data frame.")
@@ -131,6 +174,84 @@ polytomous_irt <- function(data,
   valid_items_idx <- which(item_vars > 0)
 
   if(length(valid_items_idx) == 0) stop("No valid items found.")
+
+  # --- Prior Validation and Processing ---
+  # This function validates priors for polytomous models
+  validate_and_expand_prior <- function(prior, model, verbose) {
+    # If no prior, return NULL
+    if(is.null(prior)) {
+      if(verbose) cat("No prior specified. Using Maximum Likelihood Estimation as Specified.\n")
+      return(NULL)
+    }
+
+    # Check that prior is a list
+    if(!is.list(prior)) {
+      stop("Prior must be a list. See documentation for proper format.")
+    }
+
+    # 1. Define allowed parameters based on model
+    allowed_params <- switch(model,
+                             "PCM"  = "d",
+                             "GPCM" = c("a", "d"),
+                             "GRM"  = c("a", "d"),
+                             stop("Unknown model type specified. Support only PCM, GPCM, and GRM now..."))
+
+    # 2. Check for extra/unexpected parameters
+    extra_params <- setdiff(names(prior), allowed_params)
+    if(length(extra_params) > 0) {
+      warning(sprintf("Prior specification contains parameter(s) [%s] which are not used in a %s model. These will be ignored.",
+                      paste(extra_params, collapse=", "), model))
+    }
+
+    # 3. Filter to only allowed and provided parameters
+    relevant_params <- intersect(names(prior), allowed_params)
+    if(length(relevant_params) == 0) return(NULL)
+
+    if(verbose) {
+      cat(sprintf("Using MAP (Bayesian) estimation for parameters: %s\n", paste(relevant_params, collapse=", ")))
+    }
+
+    # 4. Validate each prior is a function (no fixed values, no item-specific)
+    validated_prior <- list()
+    for(param in relevant_params) {
+      param_prior <- prior[[param]]
+
+      # Check if it's a function
+      if(!is.function(param_prior)) {
+        stop(sprintf("Prior for parameter '%s' must be a function returning log-density. Fixed value priors and item-specific priors are not supported for polytomous models.",
+                     param))
+      }
+
+      # Test the function
+      test_val <- tryCatch({
+        param_prior(0.5)
+      }, error = function(e) {
+        stop(sprintf("Prior function for parameter '%s' failed when tested: %s", param, e$message))
+      })
+
+      if(!is.numeric(test_val) || length(test_val) != 1) {
+        stop(sprintf("Prior function for parameter '%s' must return a single numeric value (log-density).", param))
+      }
+
+      validated_prior[[param]] <- param_prior
+
+      if(verbose) {
+        cat(sprintf("  - Parameter '%s': Prior function applied to ALL items/parameters\n", param))
+      }
+    }
+
+    return(validated_prior)
+  }
+  # Validate and process priors
+  prior_expanded <- validate_and_expand_prior(prior, model, con$verbose)
+
+  # Helper function to compute log-prior density
+  log_prior_density <- function(value, prior_func) {
+    if(is.null(prior_func)) return(0)
+    if(!is.function(prior_func)) return(0)
+    if(is.na(value)) return(0)
+    tryCatch(prior_func(value), error = function(e) 0)
+  }
 
   # --- Initialize Parameters ---
   a <- rep(1, J)
@@ -229,7 +350,28 @@ polytomous_irt <- function(data,
       }
       probs <- get_P_poly(th_vec, l_a, l_d, mod_type, n_cat)
       probs <- pmin(pmax(probs, 1e-10), 1-1e-10)
-      sum(r_mat * log(probs))
+
+      log_lik_data <- sum(r_mat * log(probs))
+
+      # Add priors if specified
+      if(!is.null(prior_expanded)) {
+        if(mod_type != "PCM" && !is.null(prior_expanded$a)) {
+          log_lik_data <- log_lik_data + log_prior_density(l_a, prior_expanded$a)
+        }
+        if(!is.null(prior_expanded$d)) {
+          if(mod_type == "GRM") {
+            for(k in 1:(n_cat-1)) {
+              log_lik_data <- log_lik_data + log_prior_density(l_d[k], prior_expanded$d)
+            }
+          } else {
+            for(k in 2:n_cat) {
+              log_lik_data <- log_lik_data + log_prior_density(l_d[k], prior_expanded$d)
+            }
+          }
+        }
+      }
+
+      return(log_lik_data)
     }
 
     for(iter in 1:con$nr_max_iter) {

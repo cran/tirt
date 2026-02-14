@@ -402,7 +402,7 @@ print(known_params_df)
 
 ```
 
-Finally, we can conduct a fiex-item calibration and check the final results.
+Finally, we can conduct a fixed-item calibration and check the final results.
 ```{r}
 # Run the calibration
 # We set model_default = "2PL" (this applies to unknown binary items).

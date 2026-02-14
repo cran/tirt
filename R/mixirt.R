@@ -1,13 +1,14 @@
-#' Mixed Item Response Model Estimation (Dichotomous & Polytomous)
+#' Mixed Item Response Model Estimation (Dichotomous & Polytomous) with Prior Support
 #'
 #' @description
 #' Provides a estimation framework for a broad class of different item response theory models.
 #' This function can model different combinations of item categories.
+#' Now supports flexible prior distributions for Bayesian estimation (MAP estimation).
 #'
 #' @param data A N x J data.frame. Binary items must be 0/1. Polytomous items should be continuous integers (0, 1, 2...).
 #' @param model A character vector of length J (one model per item).
 #'              Supported: "Rasch", "2PL" (2-Parameter Logistic), "3PL" (3-Parameter Logistic), "GRM" (Graded Response Model), "GPCM" (Generalized Partial Credit Model), "PCM" (Partial Credit Model).
-#'              If a single string is provided, it is applied to all items.
+#'              If a single string is provided, it is applied to all the same type of items.
 #' @param method String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood).
 #' @param control A \code{list} of control parameters for the estimation algorithm:
 #'   \itemize{
@@ -17,6 +18,14 @@
 #'           grid bounds (default = c(-4, 4)).
 #'     \item \code{quad_points}: Number of quadrature points (default = 21).
 #'     \item \code{verbose}: Logical; if \code{TRUE}, prints progress to console.
+#'     \item \code{prior}: A list of model-specific prior distributions. Default is NULL (no priors).
+#'       Format: \code{list("2PL" = list(a = function(x) ..., b = function(x) ...), "GRM" = list(...))}
+#'       Each model gets its own prior specification. All items of the same model share the same prior.
+#'       Example:
+#'       \code{prior = list(
+#'         "2PL" = list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), b = function(x) dnorm(x, 0, 2, log=TRUE)),
+#'         "GRM" = list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), d = function(x) dnorm(x, 0, 2, log=TRUE))
+#'       )}
 #'   }
 #'
 #' @return A list containing:
@@ -29,7 +38,7 @@
 #' @examples
 #'   # --- Example 1: Simulation (Mixed 2PL + GPCM) ---
 #'   set.seed(2025)
-#'   N <- 100
+#'   N <- 500
 #'   n_bin <- 5
 #'   n_poly <- 2
 #'   J <- n_bin + n_poly
@@ -69,7 +78,7 @@
 #'   # Item 7: 5 steps
 #'   data_sim[, 7] <- sim_gpcm(true_theta, a=1.2, steps=c(-5, -2.5, 0, 2.5, 5))
 #'
-#'   # 4. Run Estimation
+#'   # 4. Run Estimation without prior
 #'   # Note: Wide theta_range needed due to SD=3 in simulation
 #'   my_models <- c(rep("2PL", n_bin), rep("GPCM", n_poly))
 #'
@@ -78,7 +87,23 @@
 #'
 #'   head(res$item_params)
 #'   print(res$model_fit)
+#'
 #'   \donttest{
+#'   # 5. Run Estimation with prior (MAP)
+#'   res_prior <- mixed_irt(data = data_sim, model = my_models, method = "EM",
+#'                          control = list(max_iter = 20, theta_range = c(-6, 6),
+#'                                        prior = list(
+#'                                          "2PL" = list(
+#'                                            a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+#'                                            b = function(x) dnorm(x, 0, 2, log=TRUE)
+#'                                          ),
+#'                                          "GPCM" = list(
+#'                                            a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+#'                                            d = function(x) dnorm(x, 0, 2, log=TRUE)
+#'                                          )
+#'                                        )))
+#'   head(res_prior$item_params)
+#'   print(res_prior$model_fit)
 #'   # --- Example 2: With Package Data ---
 #'   data("ela2", package = "tirt")
 #'
@@ -106,9 +131,25 @@ mixed_irt <- function(data,
     quad_points = 21,
     nr_max_iter = 20,
     nr_damp = 0.8,
-    verbose = TRUE
+    verbose = TRUE,
+    prior = NULL  # No prior by default
   )
   con[names(control)] <- control
+
+  # Extract prior from control
+  prior <- con$prior
+
+  # Normalize all elements in the vector to uppercase
+  model <- toupper(model)
+
+  # Define the set of supported models
+  valid_models <- c("RASCH", "2PL", "3PL", "GPCM", "PCM", "GRM")
+
+  # Validate that every element in the input vector is within the allowed set
+  if (!all(model %in% valid_models)) {
+    stop("Invalid model detected. Model must be 'Rasch', '2PL', or '3PL' for dichotomous items, ",
+         "and 'GPCM', 'PCM', or 'GRM' for polytomous items (case-insensitive).")
+  }
 
   # --- Input Validation ---
   if(!is.data.frame(data)) stop("Input must be a data frame.")
@@ -125,8 +166,101 @@ mixed_irt <- function(data,
   if(length(model) != J) stop("Length of 'model' vector must match number of items.")
 
   # Define Model Types
-  binary_models <- c("Rasch", "2PL", "3PL")
+  binary_models <- c("RASCH", "2PL", "3PL")
   poly_models <- c("GRM", "GPCM", "PCM")
+
+  # --- Prior Validation ---
+  validate_prior_mixed <- function(prior, models_used, verbose) {
+    if(is.null(prior)) {
+      if(verbose) cat("No prior specified. Using Maximum Likelihood Estimation.\n")
+      return(NULL)
+    }
+
+    if(!is.list(prior)) stop("Prior must be a list.")
+
+    # Validate structure: prior must be list of model-specific lists
+    validated <- list()
+
+    for(model_name in names(prior)) {
+      model_upper <- toupper(model_name)
+
+      # Check if this model is actually used
+      if(!model_upper %in% unique(models_used)) {
+        warning(sprintf("Prior specified for model '%s' but this model is not used in data. Ignoring.", model_name))
+        next
+      }
+
+      # Define allowed parameters for this model
+      allowed_params <- switch(model_upper,
+                               "RASCH" = "b",
+                               "2PL" = c("a", "b"),
+                               "3PL" = c("a", "b", "g"),
+                               "PCM" = "d",
+                               "GPCM" = c("a", "d"),
+                               "GRM" = c("a", "d"),
+                               NULL
+      )
+
+      if(is.null(allowed_params)) {
+        warning(sprintf("Unknown model '%s' in prior specification. Ignoring.", model_name))
+        next
+      }
+
+      model_prior <- prior[[model_name]]
+      if(!is.list(model_prior)) {
+        stop(sprintf("Prior for model '%s' must be a list of parameter priors.", model_name))
+      }
+
+      # Check for unexpected parameters
+      extra_params <- setdiff(names(model_prior), allowed_params)
+      if(length(extra_params) > 0) {
+        warning(sprintf("Prior for model '%s' contains unexpected parameter(s) [%s]. These will be ignored.",
+                        model_name, paste(extra_params, collapse=", ")))
+      }
+
+      # Validate each parameter prior
+      relevant_params <- intersect(names(model_prior), allowed_params)
+      if(length(relevant_params) == 0) next
+
+      validated[[model_upper]] <- list()
+      for(param in relevant_params) {
+        param_prior <- model_prior[[param]]
+
+        if(!is.function(param_prior)) {
+          stop(sprintf("Prior for parameter '%s' in model '%s' must be a function.", param, model_name))
+        }
+
+        # Test function
+        test_val <- tryCatch(param_prior(0.5), error = function(e) {
+          stop(sprintf("Prior function for '%s' in model '%s' failed: %s", param, model_name, e$message))
+        })
+
+        if(!is.numeric(test_val) || length(test_val) != 1) {
+          stop(sprintf("Prior function for '%s' in model '%s' must return single numeric value.", param, model_name))
+        }
+
+        validated[[model_upper]][[param]] <- param_prior
+      }
+
+      if(verbose && length(validated[[model_upper]]) > 0) {
+        cat(sprintf("Using MAP estimation for model '%s', parameters: %s\n",
+                    model_upper, paste(names(validated[[model_upper]]), collapse=", ")))
+      }
+    }
+
+    if(length(validated) == 0) return(NULL)
+    return(validated)
+  }
+
+  # Helper to compute log-prior
+  log_prior_density <- function(value, prior_func) {
+    if(is.null(prior_func)) return(0)
+    if(is.na(value)) return(0)
+    tryCatch(prior_func(value), error = function(e) 0)
+  }
+
+  # Validate priors
+  prior_expanded <- validate_prior_mixed(prior, model, con$verbose)
 
   # --- Data Preprocessing ---
   n_cats <- numeric(J)
@@ -237,7 +371,7 @@ mixed_irt <- function(data,
       z <- pa * (t - pb); z <- pmin(pmax(z, -30), 30)
       pg + (1 - pg) * (1 / (1 + exp(-z)))
     }
-    if(mod_type == "Rasch") active <- c(FALSE, TRUE, FALSE)
+    if(mod_type == "RASCH") active <- c(FALSE, TRUE, FALSE)
     else if(mod_type == "2PL") active <- c(TRUE, TRUE, FALSE)
     else active <- c(TRUE, TRUE, TRUE)
 
@@ -248,7 +382,24 @@ mixed_irt <- function(data,
       if(!active[1]) full_p[1] <- 1
       P_tmp <- get_P_bin(th_vec, full_p[1], full_p[2], full_p[3])
       P_tmp <- pmin(pmax(P_tmp, 1e-9), 1-1e-9)
-      sum(r_vec * log(P_tmp) + (n_vec - r_vec) * log(1 - P_tmp))
+
+      log_lik_data <- sum(r_vec * log(P_tmp) + (n_vec - r_vec) * log(1 - P_tmp))
+
+      # Add priors if specified
+      if(!is.null(prior_expanded) && mod_type %in% names(prior_expanded)) {
+        model_prior <- prior_expanded[[mod_type]]
+        if(!is.null(model_prior$a) && active[1]) {
+          log_lik_data <- log_lik_data + log_prior_density(full_p[1], model_prior$a)
+        }
+        if(!is.null(model_prior$b) && active[2]) {
+          log_lik_data <- log_lik_data + log_prior_density(full_p[2], model_prior$b)
+        }
+        if(!is.null(model_prior$g) && active[3]) {
+          log_lik_data <- log_lik_data + log_prior_density(full_p[3], model_prior$g)
+        }
+      }
+
+      return(log_lik_data)
     }
 
     for(k in 1:con$nr_max_iter) {
@@ -307,7 +458,29 @@ mixed_irt <- function(data,
         for(k in 1:n_cat) probs[,k] <- P_s[,k] - P_s[,k+1]
         probs <- pmax(probs, 1e-10)
       }
-      sum(r_mat * log(probs))
+
+      log_lik_data <- sum(r_mat * log(probs))
+
+      # Add priors if specified
+      if(!is.null(prior_expanded) && mod_type %in% names(prior_expanded)) {
+        model_prior <- prior_expanded[[mod_type]]
+        if(!is.null(model_prior$a) && mod_type != "PCM") {
+          log_lik_data <- log_lik_data + log_prior_density(l_a, model_prior$a)
+        }
+        if(!is.null(model_prior$d)) {
+          if(mod_type == "GRM") {
+            for(k in 1:(n_cat-1)) {
+              log_lik_data <- log_lik_data + log_prior_density(l_d[k], model_prior$d)
+            }
+          } else {
+            for(k in 2:n_cat) {
+              log_lik_data <- log_lik_data + log_prior_density(l_d[k], model_prior$d)
+            }
+          }
+        }
+      }
+
+      return(log_lik_data)
     }
 
     for(k in 1:con$nr_max_iter) {
@@ -345,7 +518,17 @@ mixed_irt <- function(data,
 
   # --- 3. Main Estimation Loop ---
 
-  if(con$verbose) cat(sprintf("\nStarting Mixed IRT (%s) Estimation...\n", method))
+  if(con$verbose) {
+    cat("\n------------------------------------------------\n")
+    cat(sprintf("Starting Mixed IRT (%s) Estimation...\n", method))
+    if(!is.null(prior_expanded)) {
+      cat("Estimation Type: MAP (Maximum A Posteriori) with Bayesian Priors\n")
+    } else {
+      cat("Estimation Type: MLE (Maximum Likelihood Estimation)\n")
+    }
+    cat("------------------------------------------------\n")
+  }
+
   is_converged <- FALSE
 
   for(iter in 1:con$max_iter) {
@@ -491,6 +674,48 @@ mixed_irt <- function(data,
     if(!is.na(den) && abs(den) > 1e-6) final_se[i] <- 1/sqrt(abs(den)) else final_se[i] <- NA
   }
 
+  # Add log-prior to log-likelihood if using priors
+  if(!is.null(prior_expanded)) {
+    log_prior_total <- 0
+    for(j in valid_items_idx) {
+      mod <- model[j]
+      if(mod %in% names(prior_expanded)) {
+        model_prior <- prior_expanded[[mod]]
+        if(mod %in% binary_models) {
+          if(!is.null(model_prior$a) && mod != "RASCH") {
+            log_prior_total <- log_prior_total + log_prior_density(a[j], model_prior$a)
+          }
+          if(!is.null(model_prior$b)) {
+            log_prior_total <- log_prior_total + log_prior_density(b[j], model_prior$b)
+          }
+          if(!is.null(model_prior$g) && mod == "3PL") {
+            log_prior_total <- log_prior_total + log_prior_density(g[j], model_prior$g)
+          }
+        } else {
+          if(!is.null(model_prior$a) && mod != "PCM") {
+            log_prior_total <- log_prior_total + log_prior_density(a[j], model_prior$a)
+          }
+          if(!is.null(model_prior$d)) {
+            if(mod == "GRM") {
+              for(k in 1:(n_cats[j]-1)) {
+                if(!is.na(d[j,k])) {
+                  log_prior_total <- log_prior_total + log_prior_density(d[j,k], model_prior$d)
+                }
+              }
+            } else {
+              for(k in 2:n_cats[j]) {
+                if(!is.na(d[j,k])) {
+                  log_prior_total <- log_prior_total + log_prior_density(d[j,k], model_prior$d)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    log_lik <- log_lik + log_prior_total
+  }
+
   if(con$verbose) cat("Person Parameter Estimation Finished.\n")
 
   # --- 5. Output Construction with Descriptives & SEs ---
@@ -563,14 +788,17 @@ mixed_irt <- function(data,
   row.names(out_items) <- NULL
   row.names(out_persons) <- NULL
 
-  n_par <- sum(ifelse(model %in% binary_models, ifelse(model=="Rasch",1, ifelse(model=="2PL",2,3)), 1 + (n_cats-1)))
+  n_par <- sum(ifelse(model %in% binary_models, ifelse(model=="RASCH",1, ifelse(model=="2PL",2,3)), 1 + (n_cats-1)))
   if(length(bad_items_idx)>0) n_par <- n_par - length(bad_items_idx)
 
   aic <- 2*n_par - 2*log_lik
   bic <- n_par*log(N) - 2*log_lik
 
+  # Update label based on estimation type
+  log_lik_label <- if(!is.null(prior_expanded)) "LogPosterior" else "LogLikelihood"
+
   fit_df <- data.frame(
-    Stat = c("LogLikelihood", "AIC", "BIC", "Iterations"),
+    Stat = c(log_lik_label, "AIC", "BIC", "Iterations"),
     Value = c(round(log_lik, 2), round(aic, 2), round(bic, 2), iter)
   )
 
@@ -580,10 +808,13 @@ mixed_irt <- function(data,
     cat("------------------------------------------------\n")
   }
 
+  # Settings summary
+  estimation_type <- if(!is.null(prior_expanded)) "MAP (with priors)" else "MLE (no priors)"
+
   return(list(
     item_params = out_items,
     person_params = out_persons,
     model_fit = fit_df,
-    settings = list(method=method, models=table(model))
+    settings = list(method=method, models=table(model), estimation=estimation_type)
   ))
 }

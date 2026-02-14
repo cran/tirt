@@ -2,7 +2,7 @@
 % Please edit documentation in R/mixirt.R
 \name{mixed_irt}
 \alias{mixed_irt}
-\title{Mixed Item Response Model Estimation (Dichotomous & Polytomous)}
+\title{Mixed Item Response Model Estimation (Dichotomous & Polytomous) with Prior Support}
 \usage{
 mixed_irt(data, model = "2PL", method = "EM", control = list())
 }
@@ -11,7 +11,7 @@ mixed_irt(data, model = "2PL", method = "EM", control = list())
 
 \item{model}{A character vector of length J (one model per item).
 Supported: "Rasch", "2PL" (2-Parameter Logistic), "3PL" (3-Parameter Logistic), "GRM" (Graded Response Model), "GPCM" (Generalized Partial Credit Model), "PCM" (Partial Credit Model).
-If a single string is provided, it is applied to all items.}
+If a single string is provided, it is applied to all the same type of items.}
 
 \item{method}{String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood).}
 
@@ -23,6 +23,14 @@ If a single string is provided, it is applied to all items.}
 grid bounds (default = c(-4, 4)).
 \item \code{quad_points}: Number of quadrature points (default = 21).
 \item \code{verbose}: Logical; if \code{TRUE}, prints progress to console.
+\item \code{prior}: A list of model-specific prior distributions. Default is NULL (no priors).
+Format: \code{list("2PL" = list(a = function(x) ..., b = function(x) ...), "GRM" = list(...))}
+Each model gets its own prior specification. All items of the same model share the same prior.
+Example:
+\code{prior = list(
+        "2PL" = list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), b = function(x) dnorm(x, 0, 2, log=TRUE)),
+        "GRM" = list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), d = function(x) dnorm(x, 0, 2, log=TRUE))
+      )}
 }}
 }
 \value{
@@ -37,11 +45,12 @@ A list containing:
 \description{
 Provides a estimation framework for a broad class of different item response theory models.
 This function can model different combinations of item categories.
+Now supports flexible prior distributions for Bayesian estimation (MAP estimation).
 }
 \examples{
   # --- Example 1: Simulation (Mixed 2PL + GPCM) ---
   set.seed(2025)
-  N <- 100
+  N <- 500
   n_bin <- 5
   n_poly <- 2
   J <- n_bin + n_poly
@@ -81,7 +90,7 @@ This function can model different combinations of item categories.
   # Item 7: 5 steps
   data_sim[, 7] <- sim_gpcm(true_theta, a=1.2, steps=c(-5, -2.5, 0, 2.5, 5))
 
-  # 4. Run Estimation
+  # 4. Run Estimation without prior
   # Note: Wide theta_range needed due to SD=3 in simulation
   my_models <- c(rep("2PL", n_bin), rep("GPCM", n_poly))
 
@@ -90,7 +99,23 @@ This function can model different combinations of item categories.
 
   head(res$item_params)
   print(res$model_fit)
+
   \donttest{
+  # 5. Run Estimation with prior (MAP)
+  res_prior <- mixed_irt(data = data_sim, model = my_models, method = "EM",
+                         control = list(max_iter = 20, theta_range = c(-6, 6),
+                                       prior = list(
+                                         "2PL" = list(
+                                           a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+                                           b = function(x) dnorm(x, 0, 2, log=TRUE)
+                                         ),
+                                         "GPCM" = list(
+                                           a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+                                           d = function(x) dnorm(x, 0, 2, log=TRUE)
+                                         )
+                                       )))
+  head(res_prior$item_params)
+  print(res_prior$model_fit)
   # --- Example 2: With Package Data ---
   data("ela2", package = "tirt")
 

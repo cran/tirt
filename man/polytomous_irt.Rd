@@ -2,7 +2,7 @@
 % Please edit documentation in R/polytomousirt.R
 \name{polytomous_irt}
 \alias{polytomous_irt}
-\title{Polytomous Item Response Theory Estimation}
+\title{Polytomous Item Response Theory Estimation Using Likelihood or Bayesian}
 \usage{
 polytomous_irt(data, model = "GPCM", method = "EM", control = list())
 }
@@ -12,7 +12,7 @@ Missing values should be NA. Categories must be continuous integers.}
 
 \item{model}{String. "GPCM" (Generalized Partial Credit Model), "PCM" (Partial Credit Model), or "GRM" (Graded Response Model).}
 
-\item{method}{String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood).}
+\item{method}{String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood). However, using Bayesian will override the likelihood estimation.}
 
 \item{control}{A \code{list} of control parameters for the estimation algorithm:
 \itemize{
@@ -22,6 +22,13 @@ Missing values should be NA. Categories must be continuous integers.}
 grid bounds (default = c(-4, 4)).
 \item \code{quad_points}: Number of quadrature points (default = 21).
 \item \code{verbose}: Logical; if \code{TRUE}, prints progress to console.
+\item \code{prior}: A list specifying prior distributions for item parameters. Default is NULL (no priors).
+For GRM: \code{list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), d = function(x) dnorm(x, 0, 2, log=TRUE))}.
+For GPCM: \code{list(a = function(x) dlnorm(x, 0, 0.5, log=TRUE), d = function(x) dnorm(x, 0, 2, log=TRUE))}.
+For PCM: \code{list(d = function(x) dnorm(x, 0, 2, log=TRUE))}.
+Each prior is a function returning log-density and applies to ALL items.
+Fixed value priors are NOT supported.
+Item-specific priors are NOT supported.
 }}
 }
 \value{
@@ -36,10 +43,11 @@ A list containing:
 \description{
 Estimates item and person parameters for polytomous item response theory models
 using either Marginal Maximum Likelihood or Joint Maximum Likelihood.
+Now supports flexible prior distributions for Bayesian estimation (MAP estimation).
 }
 \examples{
   # --- Example 1: Simulation (GPCM) ---
-  set.seed(2025)
+  set.seed(2026)
   N <- 500; J <- 5
   n_cats <- c(3, 4, 3, 5, 4)
 
@@ -71,13 +79,23 @@ using either Marginal Maximum Likelihood or Joint Maximum Likelihood.
   }
   df_sim <- as.data.frame(sim_data)
 
-  # Run Estimation (GPCM to match simulation logic)
+  # Run Estimation (GPCM to match simulation logic without prior)
   res <- polytomous_irt(df_sim, model="GPCM", method="EM",
-                        control=list(max_iter=20, verbose=FALSE))
+                        control=list(max_iter=20, verbose=TRUE))
 
   head(res$item_params)
   print(res$model_fit)
+
   \donttest{
+  # Run Estimation with prior (MAP)
+  res_prior <- polytomous_irt(df_sim, model="PCM", method="EM",
+                              control=list(max_iter=20, verbose=FALSE,
+                                          prior=list(
+                                            d = function(x) dnorm(x, 0, 2, log=TRUE)
+                                          )))
+  head(res$item_params)
+  print(res$model_fit)
+
   # --- Example 2: With Package Data (GRM) ---
   data("ela1", package = "tirt")
 
@@ -86,10 +104,21 @@ using either Marginal Maximum Likelihood or Joint Maximum Likelihood.
 
   # Run Estimation using GRM
   real_res <- polytomous_irt(df_poly, model="GRM", method="EM",
-                             control = list(max_iter = 10))
+                             control = list(max_iter = 1000))
 
   head(real_res$item_params)
   head(real_res$person_params)
   print(real_res$model_fit)
+  # Run Estimation using GRM with prior
+  real_res2 <- polytomous_irt(df_poly, model="GRM", method="EM",
+                             control = list(max_iter = 1000,
+                                           prior = list(
+                                             a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+                                             d = function(x) dnorm(x, 0, 2, log=TRUE)
+                                           )))
+
+  head(real_res2$item_params)
+  head(real_res2$person_params)
+  print(real_res2$model_fit)
   }
 }

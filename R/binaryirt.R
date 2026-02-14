@@ -1,12 +1,13 @@
-#' Binary (Dichotomous) Item Response Theory Estimation
+#' Binary (Dichotomous) Item Response Theory Estimation Using Likelihood or Bayesian
 #'
 #' @description
 #' Estimates item and person parameters for binary item response models
 #' using either Marginal Maximum Likelihood or Joint Maximum Likelihood.
+#' Now supports flexible prior distributions for Bayesian estimation (MAP estimation).
 #'
 #' @param data A N x J data.frame of dichotomous responses (0/1).
 #' @param model String. "Rasch", "2PL" (2-Parameter Logistic), or "3PL" (3-Parameter Logistic).
-#' @param method String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood).
+#' @param method String. "EM" (Marginal Maximum Likelihood via Expectation-Maximization) or "MLE" (Joint Maximum Likelihood). However, using Bayesian will override the likelihood estimation.
 #' @param control A \code{list} of control parameters for the estimation algorithm:
 #'   \itemize{
 #'     \item \code{max_iter}: Maximum number of EM iterations (default = 100).
@@ -15,13 +16,22 @@
 #'           grid bounds (default = c(-4, 4)).
 #'     \item \code{quad_points}: Number of quadrature points (default = 21).
 #'     \item \code{verbose}: Logical; if \code{TRUE}, prints progress to console.
+#'     \item \code{prior}: A list specifying prior distributions or fixed values for item parameters. Default is NULL (no priors).
+#'       For Rasch: \code{list(b = value)} or \code{list(b = function(x) dnorm(x, 0, 1, log=TRUE))}.
+#'       For 2PL: \code{list(a = ..., b = ...)}.
+#'       For 3PL: \code{list(a = ..., b = ..., g = ...)}.
+#'       Each parameter can be:
+#'       - A single numeric value (applied to all items)
+#'       - A numeric vector of length k (item-specific fixed values)
+#'       - A function returning log-density (applied to all items)
+#'       - A list of length k with functions or values (item-specific)
 #'   }
 #'
 #' @return A list containing:
 #' \itemize{
 #'   \item \code{item_params}: A data frame of estimated item parameters (discrimination, difficulty, guessing) and their standard errors.
 #'   \item \code{person_params}: A data frame of estimated person abilities (theta) and standard errors.
-#'   \item \code{model_fit}: A data frame containing fit statistics such as Akaike’s Information Criterion (AIC), the Bayesian Information Criterion (BIC), and Log-Likelihood.
+#'   \item \code{model_fit}: A data frame containing fit statistics such as Akaike's Information Criterion (AIC), the Bayesian Information Criterion (BIC), and Log-Likelihood.
 #'   \item \code{settings}: A list of control parameters used in the estimation.
 #' }
 #' @examples
@@ -34,17 +44,33 @@
 #'   data_mat <- matrix(NA, N, J)
 #'   for(i in 1:N) {
 #'     p <- 1 / (1 + exp(-true_a * (true_theta[i] - true_b)))
-#'    data_mat[i,] <- rbinom(J, 1, p)
+#'     data_mat[i,] <- rbinom(J, 1, p)
 #'   }
 #'   df <- as.data.frame(data_mat)
 #'   names(df) <- paste0("Q", 1:J)
-#'   # # Run Function
+#'
+#'   # # Run Function without prior
 #'   res <- binary_irt(df, model="2PL", method="EM")
+#'
+#' \donttest{
+#'   # # Run Function with prior (function-based)
+#'   res_prior <- binary_irt(df, model="2PL", method="EM",
+#'                           control=list(prior=list(
+#'                             a = function(x) dlnorm(x, 0, 0.5, log=TRUE),
+#'                             b = function(x) dnorm(x, 0, 2, log=TRUE)
+#'                           )))
+#'
+#'   # # Run Function with fixed value prior
+#'   res_fixed <- binary_irt(df, model="2PL", method="EM",
+#'                           control=list(prior=list(
+#'                             a = 1,  # Fix all discrimination prior to 1
+#'                             b = function(x) dnorm(x, 0, 2, log=TRUE)
+#'                           )))
+#'
 #'   # View Results
 #'   head(res$item_params)
 #'   head(res$person_params)
 #'   print(res$model_fit)
-#'   \donttest{
 #'   # --- Example 2: With Package Data ---
 #'   data("ela1", package = "tirt")
 #'   # Subset the first 30 columns (must use the object name 'data_binary')
@@ -55,9 +81,9 @@
 #'   }
 #' @export
 binary_irt <- function(data,
-                         model = "2PL",
-                         method = "EM",
-                         control = list()) {
+                       model = "2PL",
+                       method = "EM",
+                       control = list()) {
 
   # --- 1. Setup and Defaults ---
   con <- list(
@@ -67,9 +93,24 @@ binary_irt <- function(data,
     quad_points = 21,
     nr_max_iter = 20,
     nr_damp = 1.0,
-    verbose = TRUE
+    verbose = TRUE,
+    prior = NULL  # No prior by default
   )
   con[names(control)] <- control
+
+  # Extract prior from control
+  prior <- con$prior
+
+  # Normalize model name to uppercase
+  model <- toupper(model)
+
+  # Define the set of supported models
+  valid_models <- c("RASCH", "2PL", "3PL")
+
+  # Validate that every element in the input vector is within the allowed set
+  if (!all(model %in% valid_models)) {
+    stop("Model must be 'Rasch', '2PL', or '3PL' (case-insensitive)")
+  }
 
   # --- Input Validation ---
   if(!is.data.frame(data)) stop("Input must be a data frame.")
@@ -85,6 +126,221 @@ binary_irt <- function(data,
   N <- nrow(raw_data)
   J <- ncol(raw_data)
 
+  # --- Prior Validation and Processing ---
+  # This function validates and expands priors to match the number of items
+  validate_and_expand_prior <- function(prior, model, J, verbose) {
+    # If no prior, return NULL
+    if(is.null(prior)) {
+      if(con$verbose) cat("No prior specified. Using Maximum Likelihood Estimation as Specified.\n")
+      return(NULL)
+    }
+
+    # Check that prior is a list
+    if(!is.list(prior)) {
+      stop("Prior must be a list. See documentation for proper format.")
+    }
+
+    # 1. Define allowed parameters based on model
+    allowed_params <- switch(model,
+                             "RASCH" = "b",
+                             "2PL"   = c("a", "b"),
+                             "3PL"   = c("a", "b", "g"),
+                             stop("Unknown model type specified. Support only Rasch, 2PL, and 3PL now..."))
+
+    # 2. Check for extra/unexpected parameters
+    extra_params <- setdiff(names(prior), allowed_params)
+    if(length(extra_params) > 0) {
+      warning(sprintf("Prior specification contains parameter(s) [%s] which are not used in a %s model. These will be ignored.",
+                      paste(extra_params, collapse=", "), model))
+    }
+
+    # 3. Filter to only allowed and provided parameters
+    relevant_params <- intersect(names(prior), allowed_params)
+    if(length(relevant_params) == 0) return(NULL)
+
+    if(con$verbose) {
+      cat(sprintf("Using MAP estimation for parameters: %s\n", paste(relevant_params, collapse=", ")))
+    }
+
+    # Internal check for valid types
+    is_valid_prior <- function(x) {
+      if(is.numeric(x)) return(TRUE)
+      if(is.function(x)) return(TRUE)
+      if(is.list(x)) return(all(sapply(x, function(elem) is.numeric(elem) || is.function(elem))))
+      return(FALSE)
+    }
+
+    expanded_prior <- list()
+    for(param in relevant_params) {
+      param_prior <- prior[[param]]
+
+      # Validate type (numeric, function, or list)
+      isValid <- is.numeric(param_prior) || is.function(param_prior) || is.list(param_prior)
+      if(!isValid) stop(sprintf("Prior for '%s' is an invalid type.", param))
+
+      if(!is_valid_prior(param_prior)) {
+        stop(sprintf("Prior for parameter '%s' must be numeric, a function, or a list.", param))
+      }
+
+      # Case 1: Single numeric value - apply to all items
+      if(is.numeric(param_prior) && length(param_prior) == 1) {
+        expanded_prior[[param]] <- replicate(J, param_prior, simplify=FALSE)
+        if(con$verbose) cat(sprintf("  - Parameter '%s': Fixed value %.3f applied to all %d items\n",
+                                    param, param_prior, J))
+
+        # Case 2: Numeric vector of length J - item-specific fixed values
+      } else if(is.numeric(param_prior) && length(param_prior) == J) {
+        expanded_prior[[param]] <- as.list(param_prior)
+        if(con$verbose) cat(sprintf("  - Parameter '%s': Item-specific fixed values for %d items\n",
+                                    param, J))
+
+        # Case 3: Numeric vector of wrong length
+      } else if(is.numeric(param_prior) && length(param_prior) != J && length(param_prior) != 1) {
+        stop(sprintf("Prior for parameter '%s' has length %d, but must be either 1 (applied to all items) or %d (one per item)",
+                     param, length(param_prior), J))
+
+        # Case 4: Single function - apply to all items
+      } else if(is.function(param_prior)) {
+        # Test the function to make sure it works
+        test_val <- tryCatch({
+          param_prior(0.5)
+        }, error = function(e) {
+          stop(sprintf("Prior function for parameter '%s' failed when tested with value 0.5. Error: %s",
+                       param, e$message))
+        })
+        if(!is.numeric(test_val) || length(test_val) != 1) {
+          stop(sprintf("Prior function for parameter '%s' must return a single numeric value (log-density)", param))
+        }
+
+        expanded_prior[[param]] <- replicate(J, param_prior, simplify=FALSE)
+        if(con$verbose) cat(sprintf("  - Parameter '%s': Prior function applied to all %d items\n",
+                                    param, J))
+
+        # Case 5: List of length J - item-specific priors (can be mix of values and functions)
+      } else if(is.list(param_prior) && length(param_prior) == J) {
+        # Validate each element
+        for(j in 1:J) {
+          elem <- param_prior[[j]]
+          if(is.function(elem)) {
+            # Test the function
+            test_val <- tryCatch({
+              elem(0.5)
+            }, error = function(e) {
+              stop(sprintf("Prior function for parameter '%s'[Item %d] failed when tested. Error: %s",
+                           param, j, e$message))
+            })
+            if(!is.numeric(test_val) || length(test_val) != 1) {
+              stop(sprintf("Prior function for parameter '%s'[Item %d] must return a single numeric value",
+                           param, j))
+            }
+          } else if(!is.numeric(elem) || length(elem) != 1) {
+            stop(sprintf("Prior for parameter '%s'[Item %d] must be a single numeric value or function",
+                         param, j))
+          }
+        }
+        expanded_prior[[param]] <- param_prior
+        if(con$verbose) cat(sprintf("  - Parameter '%s': Item-specific priors for %d items\n",
+                                    param, J))
+
+        # Case 6: List of wrong length
+      } else if(is.list(param_prior)) {
+        stop(sprintf("Prior list for parameter '%s' has length %d, but must be length %d (one per item)",
+                     param, length(param_prior), J))
+      }
+    }
+
+    return(expanded_prior)
+  }
+
+  # Validate and expand the prior
+  prior_expanded <- validate_and_expand_prior(con$prior, model, J, con$verbose)
+
+  # Decide on the message based on the RESULT of validation
+  if(is.null(prior_expanded)) {
+    if(con$verbose) cat("No valid priors for this model. Using Maximum Likelihood Estimation (MLE).\n")
+  } else {
+    if(con$verbose) cat("Valid priors detected. Using MAP (Maximum A Posteriori) Estimation.\n")
+  }
+
+  # --- Helper function to compute log prior density ---
+  log_prior_density <- function(value, prior_spec) {
+    # If no prior, return 0 (no contribution to log posterior)
+    if(is.null(prior_spec)) return(0)
+
+    # If prior is a fixed numeric value, use a very strong normal prior centered at that value
+    if(is.numeric(prior_spec)) {
+      # Very tight prior: essentially fixes the parameter
+      return(dnorm(value, mean=prior_spec, sd=0.001, log=TRUE))
+    }
+
+    # If prior is a function, evaluate it
+    if(is.function(prior_spec)) {
+      result <- tryCatch({
+        prior_spec(value)
+      }, error = function(e) {
+        warning(sprintf("Prior function evaluation failed for value %.3f. Returning -Inf. Error: %s",
+                        value, e$message))
+        return(-Inf)
+      })
+
+      # if the NR algorithm probes slightly outside [0, 1]
+      if(is.na(result) || is.nan(result)) return(-Inf)
+
+      if(!is.numeric(result) || length(result) != 1) {
+        warning(sprintf("Prior function returned invalid value. Expected single numeric, got %s",
+                        class(result)))
+        return(-Inf)
+      }
+
+      return(result)
+    }
+
+    return(0)  # Shouldn't reach here
+  }
+
+  # --- Helper function to compute log prior gradient (derivative) using numerical differentiation ---
+  log_prior_gradient <- function(value, prior_spec) {
+    # If no prior, return 0
+    if(is.null(prior_spec)) return(0)
+
+    # If prior is a fixed numeric value, gradient pulls strongly toward that value
+    if(is.numeric(prior_spec)) {
+      return(-(value - prior_spec) / (0.001^2))
+    }
+
+    # If prior is a function, use numerical differentiation
+    if(is.function(prior_spec)) {
+      h <- 1e-5
+      f_plus <- log_prior_density(value + h, prior_spec)
+      f_minus <- log_prior_density(value - h, prior_spec)
+      return((f_plus - f_minus) / (2 * h))
+    }
+
+    return(0)
+  }
+
+  # --- Helper function to compute log prior hessian (second derivative) using numerical differentiation ---
+  log_prior_hessian <- function(value, prior_spec) {
+    # If no prior, return 0
+    if(is.null(prior_spec)) return(0)
+
+    # If prior is a fixed numeric value, hessian is constant (very negative = strong pull)
+    if(is.numeric(prior_spec)) {
+      return(-1 / (0.001^2))
+    }
+
+    # If prior is a function, use numerical differentiation
+    if(is.function(prior_spec)) {
+      h <- 1e-5
+      f_0 <- log_prior_density(value, prior_spec)
+      f_plus <- log_prior_density(value + h, prior_spec)
+      f_minus <- log_prior_density(value - h, prior_spec)
+      return((f_plus - 2*f_0 + f_minus) / (h^2))
+    }
+
+    return(0)
+  }
+
   # Identify valid items
   item_means <- colMeans(raw_data, na.rm = TRUE)
   valid_items_idx <- which(item_means > 0 & item_means < 1)
@@ -92,15 +348,23 @@ binary_irt <- function(data,
 
   # Initialize Parameters
   a <- rep(1, J)
+  # Calculate proportion correct, avoiding 0 and 1
   p_bounded <- pmin(pmax(item_means, 0.01), 0.99)
   b <- -log(p_bounded / (1 - p_bounded))
   g <- rep(0, J)
 
-  if (model == "Rasch") {
-    a[] <- 1
-  } else if (model == "3PL") {
-    g[] <- 0.2
+  if (model == "3PL") {
+    # For 3PL, difficulty must be adjusted for guessing
+    # Starting g at 0.15 is safer than 0.2 or 0
+    g <- rep(0.15, J)
+    # Corrected b calculation for 3PL: b = -log((p - g)/(1 - p)) / a
+    b <- -log(pmax(p_bounded - 0.15, 0.01) / (1 - p_bounded))
+  } else {
+    g <- rep(0, J)
+    b <- -log(p_bounded / (1 - p_bounded))
   }
+
+  if (model == "RASCH") a[] <- 1
 
   # Initialize Theta safely
   raw_scores <- rowMeans(raw_data, na.rm=TRUE)
@@ -124,25 +388,44 @@ binary_irt <- function(data,
     return(p)
   }
 
-  solve_item_nr <- function(r_vec, n_vec, theta_vec, cur_a, cur_b, cur_g, mod_type) {
+  # Updated solve_item_nr to include prior information
+  solve_item_nr <- function(r_vec, n_vec, theta_vec, cur_a, cur_b, cur_g, mod_type, item_idx) {
     pa <- cur_a; pb <- cur_b; pg <- cur_g
 
-    if(mod_type == "Rasch") active_idx <- 2
+    # Determine which parameters are active for this model
+    if(mod_type == "RASCH") active_idx <- 2
     else if(mod_type == "2PL") active_idx <- 1:2
     else active_idx <- 1:3
 
+    # Get priors for this item (if they exist)
+    prior_a <- if(!is.null(prior_expanded) && "a" %in% names(prior_expanded)) prior_expanded$a[[item_idx]] else NULL
+    prior_b <- if(!is.null(prior_expanded) && "b" %in% names(prior_expanded)) prior_expanded$b[[item_idx]] else NULL
+    prior_g <- if(!is.null(prior_expanded) && "g" %in% names(prior_expanded)) prior_expanded$g[[item_idx]] else NULL
+
+    # Log-likelihood function (now includes prior - making it log-posterior)
     ll_func <- function(p_vec) {
       loc_a <- if(1 %in% active_idx) p_vec[1] else 1
-      loc_b <- if(mod_type == "Rasch") p_vec[1] else p_vec[2]
+      loc_b <- if(mod_type == "RASCH") p_vec[1] else p_vec[2]
       loc_g <- if(3 %in% active_idx) p_vec[3] else 0
 
       P_tmp <- get_P(theta_vec, loc_a, loc_b, loc_g)
       P_tmp <- pmin(pmax(P_tmp, 1e-9), 1-1e-9)
-      sum(r_vec * log(P_tmp) + (n_vec - r_vec) * log(1 - P_tmp))
+
+      # Log-likelihood from data
+      log_lik <- sum(r_vec * log(P_tmp) + (n_vec - r_vec) * log(1 - P_tmp))
+
+      # Add log-prior contributions
+      log_prior <- 0
+      if(!is.null(prior_a) && mod_type != "RASCH") log_prior <- log_prior + log_prior_density(loc_a, prior_a)
+      if(!is.null(prior_b))                        log_prior <- log_prior + log_prior_density(loc_b, prior_b)
+      if(!is.null(prior_g) && mod_type == "3PL")   log_prior <- log_prior + log_prior_density(loc_g, prior_g)
+
+      return(log_lik + log_prior)
     }
 
+    # Newton-Raphson iterations
     for(iter in 1:con$nr_max_iter) {
-      if(mod_type == "Rasch") curr_vec <- c(pb)
+      if(mod_type == "RASCH") curr_vec <- c(pb)
       else if(mod_type == "2PL") curr_vec <- c(pa, pb)
       else curr_vec <- c(pa, pb, pg)
 
@@ -151,46 +434,75 @@ binary_irt <- function(data,
       hess <- matrix(0, length(curr_vec), length(curr_vec))
       f0 <- ll_func(curr_vec)
 
+      # Compute gradient using finite differences
       for(k in 1:length(curr_vec)) {
         tmp <- curr_vec; tmp[k] <- tmp[k] + h
         grad[k] <- (ll_func(tmp) - f0) / h
       }
 
+      # Compute hessian (diagonal only) using finite differences
       for(k in 1:length(curr_vec)) {
         tmp_kk <- curr_vec; tmp_kk[k] <- tmp_kk[k] + h
         tmp_mk <- curr_vec; tmp_mk[k] <- tmp_mk[k] - h
         hess[k,k] <- (ll_func(tmp_kk) - 2*f0 + ll_func(tmp_mk)) / (h^2)
       }
+
+      # Add small regularization for numerical stability
       diag(hess) <- diag(hess) - 1e-5
 
       try_step <- try(solve(hess, grad), silent = TRUE)
       if(inherits(try_step, "try-error")) break
 
       step <- try_step * con$nr_damp
+
+      # Check if step is finite before the if statement
+      if(any(!is.finite(step))) break
+
+      # Limit the step size to prevent "shooting" to infinity in one jump
+      step <- pmin(pmax(step, -2), 2)
+
       new_vec <- curr_vec - step
 
-      if(mod_type == "Rasch") {
-        pb <- new_vec[1]
+      # Update parameters with constraints
+      if(mod_type == "RASCH") {
+        pb <- max(min(new_vec[1], 15), -15) # Allow extremely low difficulty
       } else if (mod_type == "2PL") {
-        pa <- max(new_vec[1], 0.01); pb <- new_vec[2]
+        pa <- max(min(new_vec[1], 5), 0.01)
+        pb <- max(min(new_vec[2], 15), -15)
       } else {
-        pa <- max(new_vec[1], 0.01); pb <- new_vec[2]; pg <- min(max(new_vec[3], 0), 0.4)
+        pa <- max(min(new_vec[1], 5), 0.01)
+        pb <- max(min(new_vec[2], 15), -15)
+        # Stay strictly within (0.001, 0.5) so priors like Beta don't crash
+        pg <- max(min(new_vec[3], 0.5), 0.001)
       }
+
+      # Check convergence
       if(max(abs(step)) < 1e-5) break
     }
 
+    # Compute standard errors
     se_vec <- tryCatch({
-      if(mod_type == "Rasch") curr_vec <- c(pb)
+      if(mod_type == "RASCH") curr_vec <- c(pb)
       else if(mod_type == "2PL") curr_vec <- c(pa, pb)
       else curr_vec <- c(pa, pb, pg)
 
       hess_final <- matrix(0, length(curr_vec), length(curr_vec))
       f0 <- ll_func(curr_vec)
+
       for(k in 1:length(curr_vec)) {
         tmp_kk <- curr_vec; tmp_kk[k] <- tmp_kk[k] + h
         tmp_mk <- curr_vec; tmp_mk[k] <- tmp_mk[k] - h
         hess_final[k,k] <- (ll_func(tmp_kk) - 2*f0 + ll_func(tmp_mk)) / (h^2)
       }
+
+      # Stability: Add a tiny penalty to the diagonal to ensure invertibility
+      diag(hess_final) <- diag(hess_final) - 1e-6
+
+      # Check if Hessian is still invalid
+      if(any(is.na(hess_final)) || any(diag(hess_final) >= 0)) {
+        return(rep(NA, length(curr_vec)))
+      }
+
       sqrt(diag(solve(-hess_final)))
     }, error = function(e) rep(NA, length(curr_vec)), warning = function(w) rep(NA, length(curr_vec)))
 
@@ -201,6 +513,9 @@ binary_irt <- function(data,
 
   if(con$verbose) {
     cat(sprintf("\nStarting %s Estimation using %s algorithm...\n", model, method))
+    if(!is.null(prior_expanded)) {
+      cat("Bayesian estimation with priors enabled (MAP estimation).\n")
+    }
     cat(sprintf("------------------------------------------------\n"))
   }
 
@@ -233,7 +548,7 @@ binary_irt <- function(data,
       Posterior_iq <- F_iq / sum_Fi
 
     } else {
-      # MLE Person Update
+      # MLE Person Update (no change needed - person parameters don't have priors)
       for(i in 1:N) {
         valid <- !is.na(raw_data[i,]) & (1:J %in% valid_items_idx)
         if(sum(valid)==0) next
@@ -253,7 +568,7 @@ binary_irt <- function(data,
       }
     }
 
-    # M-STEP
+    # M-STEP (now with prior information)
     max_param_change <- 0
 
     for (j in valid_items_idx) {
@@ -261,10 +576,12 @@ binary_irt <- function(data,
       if (method == "EM") {
         r_jq <- colSums(Posterior_iq * ifelse(!is.na(raw_data[,j]) & raw_data[,j]==1, 1, 0))
         n_jq <- colSums(Posterior_iq * ifelse(!is.na(raw_data[,j]), 1, 0))
-        res <- solve_item_nr(r_jq, n_jq, nodes, a[j], b[j], g[j], model)
+        # Pass item index to get the correct prior
+        res <- solve_item_nr(r_jq, n_jq, nodes, a[j], b[j], g[j], model, j)
       } else {
         valid <- !is.na(raw_data[,j])
-        res <- solve_item_nr(raw_data[valid,j], rep(1, sum(valid)), theta[valid], a[j], b[j], g[j], model)
+        # Pass item index to get the correct prior
+        res <- solve_item_nr(raw_data[valid,j], rep(1, sum(valid)), theta[valid], a[j], b[j], g[j], model, j)
       }
       a[j] <- res$a; b[j] <- res$b; g[j] <- res$g
       max_param_change <- max(max_param_change, abs(c(a[j], b[j], g[j]) - old_params), na.rm=TRUE)
@@ -272,7 +589,9 @@ binary_irt <- function(data,
 
     if(con$verbose) cat(paste0("\rIteration ", iter, ": Max Param Change = ", round(max_param_change, 5), "   "))
 
-    if(max_param_change < con$converge_tol) {
+    # Only allow convergence if parameters moved at least once
+    # and the change is small but finite.
+    if(iter > 10 && max_param_change < con$converge_tol) {
       if(con$verbose) cat("\n\n>>> Convergence Confirmation: Model Converged!\n")
       is_converged <- TRUE
       break
@@ -343,25 +662,26 @@ binary_irt <- function(data,
 
   if(con$verbose) cat("Person Parameter Estimation Finished.\n")
 
-  # Final Item Statistics
+  # Final Item Statistics with standard errors
   se_a <- rep(NA, J); se_b <- rep(NA, J); se_g <- rep(NA, J)
 
   for(j in valid_items_idx) {
     if (method == "EM") {
       r_jq <- colSums(Posterior_iq * ifelse(!is.na(raw_data[,j]) & raw_data[,j]==1, 1, 0))
       n_jq <- colSums(Posterior_iq * ifelse(!is.na(raw_data[,j]), 1, 0))
-      res <- solve_item_nr(r_jq, n_jq, nodes, a[j], b[j], g[j], model)
+      res <- solve_item_nr(r_jq, n_jq, nodes, a[j], b[j], g[j], model, j)
     } else {
       valid <- !is.na(raw_data[,j])
-      res <- solve_item_nr(raw_data[valid,j], rep(1, sum(valid)), theta[valid], a[j], b[j], g[j], model)
+      res <- solve_item_nr(raw_data[valid,j], rep(1, sum(valid)), theta[valid], a[j], b[j], g[j], model, j)
     }
-    if(model == "Rasch") { se_b[j] <- res$se[1] }
+    if(model == "RASCH") { se_b[j] <- res$se[1] }
     else if (model == "2PL") { se_a[j] <- res$se[1]; se_b[j] <- res$se[2] }
     else { se_a[j] <- res$se[1]; se_b[j] <- res$se[2]; se_g[j] <- res$se[3] }
   }
 
-  # Fit Statistics
+  # Fit Statistics (including log-prior in log-likelihood for MAP estimation)
   infit <- rep(NA, J); outfit <- rep(NA, J); log_lik <- 0
+
   for(j in valid_items_idx) {
     valid_p <- !is.na(final_theta) & !is.na(raw_data[,j])
     if(sum(valid_p) == 0) next
@@ -373,14 +693,33 @@ binary_irt <- function(data,
     Z <- (x_use - P) / sqrt(W + 1e-10)
     outfit[j] <- sum(Z^2) / length(Z)
     infit[j] <- sum(W * Z^2) / (sum(W) + 1e-10)
+
+    # Log-likelihood from data
     log_lik <- log_lik + sum(x_use * log(P_safe) + (1-x_use) * log(1-P_safe))
+  }
+
+  # Add log-prior contribution to log-likelihood if priors are specified
+  if(!is.null(prior_expanded)) {
+    log_prior_total <- 0
+    for(j in valid_items_idx) {
+      if(model != "RASCH" && !is.na(a[j])) {
+        log_prior_total <- log_prior_total + log_prior_density(a[j], prior_expanded$a[[j]])
+      }
+      if(!is.na(b[j])) {
+        log_prior_total <- log_prior_total + log_prior_density(b[j], prior_expanded$b[[j]])
+      }
+      if(model == "3PL" && !is.na(g[j])) {
+        log_prior_total <- log_prior_total + log_prior_density(g[j], prior_expanded$g[[j]])
+      }
+    }
+    log_lik <- log_lik + log_prior_total
   }
 
   # Construct Output - SAFELY
   n_count <- as.vector(colSums(!is.na(raw_data)))
   p_val <- as.vector(colMeans(raw_data, na.rm=TRUE))
 
-  if(model == "Rasch") {
+  if(model == "RASCH") {
     out_items <- data.frame(item=as.vector(item_names),
                             difficulty=as.vector(round(b,3)),
                             difficulty_se=as.vector(round(se_b,3)),
@@ -422,17 +761,23 @@ binary_irt <- function(data,
                             number=as.vector(n_resp),
                             stringsAsFactors = FALSE)
 
-  k_params <- length(valid_items_idx) * (if(model=="Rasch") 1 else if(model=="2PL") 2 else 3)
+  k_params <- length(valid_items_idx) * (if(model=="RASCH") 1 else if(model=="2PL") 2 else 3)
   aic <- 2*k_params - 2*log_lik
   bic <- k_params*log(N) - 2*log_lik
-  out_fit <- data.frame(Index=c("LogLikelihood", "AIC", "BIC", "Iterations"),
+
+  # Add note about MAP estimation in fit statistics
+  log_lik_label <- if(!is.null(prior_expanded)) "LogPosterior" else "LogLikelihood"
+
+  out_fit <- data.frame(Index=c(log_lik_label, "AIC", "BIC", "Iterations"),
                         Value=as.vector(c(round(log_lik,3), round(aic,3), round(bic,3), iter)),
                         stringsAsFactors = FALSE)
 
   # Settings summary for user reference
+  estimation_type <- if(!is.null(prior_expanded)) "MAP (with priors)" else "MLE (no priors)"
   out_settings <- data.frame(
-    Parameter = c("Model", "Method", "Max_Iter", "Converge_Tol", "Theta_Min", "Theta_Max"),
-    Value = as.vector(c(model, method, con$max_iter, con$converge_tol, con$theta_range[1], con$theta_range[2])),
+    Parameter = c("Model", "Method", "Estimation", "Max_Iter", "Converge_Tol", "Theta_Min", "Theta_Max"),
+    Value = as.vector(c(model, method, estimation_type, con$max_iter, con$converge_tol,
+                        con$theta_range[1], con$theta_range[2])),
     stringsAsFactors = FALSE
   )
 
