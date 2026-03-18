@@ -1,5 +1,5 @@
-175e3ac5ed6bdb663eb8ee33c72f1e6f *DESCRIPTION
-4c9ab4adbd6c2b93b7cb64faa347d6b9 *NAMESPACE
+4ed96d50766d9da9c203d967f52cfe31 *DESCRIPTION
+9653359e0baf511ccc33d48b52ea2ecb *NAMESPACE
 13712a2dcbf72bf1086c998d9f07345d *R/binaryirt.R
 f7ade7cf87dd1f9f072215210a63f2c2 *R/data.R
 624fa7493a84db08f7001de3c4217a12 *R/equating.R
@@ -7,6 +7,7 @@ e266b59e8c0e219d6e173519de2689dc *R/fixed_item.R
 fb93aea914606aaa1175921eab00fc74 *R/fixed_person.R
 c2fdd5f11d6f928cebcd76497069f04a *R/globals.R
 67eaf490118e0aa5d76d81333d5ba5e1 *R/irt_trt.R
+55cd3acef7675d50a55cbb7dcf50713b *R/mbinary.R
 8b385d1a901dedd3da54360a392032f3 *R/mixirt.R
 ba607d78891caf1ad36fb22b8dec0086 *R/polytomousirt.R
 77fb9a1794ec26883e513bdbd39fd67f *R/sim_irt.R
@@ -31,6 +32,7 @@ ef0de79535ee88619e744f290a2a677f *man/equate_irt.Rd
 57982377aefbcbe95f74bf99bc785c3f *man/fix_person.Rd
 325c7b3b34d46e087e45b57508391ed6 *man/fixed_item.Rd
 da228c4abc3099eed6ba1be9f1e96c00 *man/irt_trt.Rd
+9c822b2969fc5c940f22a70b2a088c65 *man/mirt_binary.Rd
 b1aced39dc307dd2ccf13285f3307dd1 *man/mixed_irt.Rd
 f1fd1a01978d607406fa6d052935940e *man/polytomous_irt.Rd
 3dfe66f498cc58fcc65ea5b1d0c7ab73 *man/sim_irt.Rd
