@@ -7,7 +7,7 @@
 mirt_binary(
   data,
   model = "2PL",
-  dimension = 1,
+  dimension = 2,
   method = "MML",
   control = list()
 )
@@ -52,7 +52,9 @@ optimization without relying on external optimizers.
 
   # --- Simulation for Multidimensional Data ---
   set.seed(202)
-  N <- 800; J <- 20; D <- 2
+  N <- 800
+  J <- 20
+  D <- 2
 
   # Simulate Abilities (2 Dimensions, correlated)
   Sigma <- matrix(c(1, 0.4, 0.4, 1), 2, 2)

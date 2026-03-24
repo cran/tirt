@@ -1,6 +1,6 @@
 Package: tirt
 Title: Testlet Item Response Theory
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: c(
     person("Jiawei", "Xiong", email = "jiawei.xiong@uga.edu", role = c("aut", "cre")),
     person("Cheng", "Tang", role = "ctb"),
@@ -8,9 +8,9 @@ Authors@R: c(
   )
 Description: Implementation of Testlet and Item Response Theory. 
     A light-version yet comprehensive and streamlined framework for psychometric analysis using 
-    unidimensional and multidimensional
-    Item Response Theory (IRT; Baker & Kim (2004) <doi:10.1201/9781482276725>) and 
-    Testlet Response Theory (TRT; Wainer et al., (2007) <doi:10.1017/CBO9780511618765>). 
+    unidimensional and multidimensional Item Response Theory 
+    (IRT; Baker & Kim (2004) <doi:10.1201/9781482276725>) and Testlet Response Theory 
+    (TRT; Wainer et al., (2007) <doi:10.1017/CBO9780511618765>). 
     Designed for researchers, this package supports the estimation of item and person 
     parameters for a wide variety of models, including binary (i.e., Rasch, 2-Parameter Logistic, 3-Parameter Logistic) 
     and polytomous (Partial Credit Model, Generalized Partial Credit Model, Graded Response Model) formats. It also supports the estimation of Testlet models (Rasch Testlet, 2-Parameter Logistic Testlet, 3-Parameter Logistic Testlet, Bifactor, Partial Credit Model Testlet, Graded Response), allowing users to account for local item dependence in bundled items. A key feature is the specialized support for combination use and joint estimation of item response model and testlet response model in one calibration.
@@ -34,10 +34,10 @@ Imports: dplyr, tidyr, purrr, gtools, stats, utils
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2026-03-18 06:49:26 UTC; jx
+Packaged: 2026-03-21 03:17:32 UTC; jx
 Author: Jiawei Xiong [aut, cre],
   Cheng Tang [ctb],
   Qidi Liu [ctb]
 Maintainer: Jiawei Xiong <jiawei.xiong@uga.edu>
 Repository: CRAN
-Date/Publication: 2026-03-18 07:10:02 UTC
+Date/Publication: 2026-03-24 08:40:08 UTC

@@ -34,7 +34,9 @@
 #'
 #'   # --- Simulation for Multidimensional Data ---
 #'   set.seed(202)
-#'   N <- 800; J <- 20; D <- 2
+#'   N <- 800
+#'   J <- 20
+#'   D <- 2
 #'
 #'   # Simulate Abilities (2 Dimensions, correlated)
 #'   Sigma <- matrix(c(1, 0.4, 0.4, 1), 2, 2)
@@ -77,10 +79,10 @@
 #'   }
 #' @export
 mirt_binary <- function(data,
-                         model = "2PL",
-                         dimension = 1,
-                         method = "MML",
-                         control = list()) {
+                        model = "2PL",
+                        dimension = 2,
+                        method = "MML",
+                        control = list()) {
 
   # --- 1. Setup and Control Processing ---
   con <- list(
@@ -193,6 +195,13 @@ mirt_binary <- function(data,
     # Determine active parameters based on Q-matrix and Model
     active_a_idx <- which(q_vec == 1)
 
+    # FIX 3: Build explicit, stable index map once — used consistently everywhere
+    # This prevents the off-by-one SE misassignment when active_a_idx length varies
+    idx_a  <- if(mod_type != "RASCH") seq_along(active_a_idx) else integer(0)
+    idx_d  <- length(idx_a) + 1
+    idx_g  <- if(mod_type == "3PL") idx_d + 1 else NULL
+    n_params <- idx_d + ifelse(mod_type == "3PL", 1, 0)
+
     # Build a tight vector of only the parameters we are estimating
     if(mod_type == "RASCH") {
       curr_vec <- c(cur_d)
@@ -203,88 +212,98 @@ mirt_binary <- function(data,
     }
 
     # Internal Log-Likelihood Function mapping tight vector back to MIRT space
+    # Uses stable idx_a / idx_d / idx_g map throughout
     ll_func <- function(p_vec) {
       loc_a <- cur_a
       loc_d <- cur_d
       loc_g <- cur_g
 
-      idx <- 1
-      if(mod_type != "RASCH") {
-        loc_a[active_a_idx] <- p_vec[idx:(idx + length(active_a_idx) - 1)]
-        idx <- idx + length(active_a_idx)
-      }
-      loc_d <- p_vec[idx]
-      if(mod_type == "3PL") {
-        loc_g <- p_vec[idx + 1]
-      }
+      if(mod_type != "RASCH") loc_a[active_a_idx] <- p_vec[idx_a]
+      loc_d <- p_vec[idx_d]
+      if(mod_type == "3PL") loc_g <- p_vec[idx_g]
 
       P_tmp <- get_P_multi(theta_matrix, loc_a, loc_d, loc_g)
       P_tmp <- pmin(pmax(P_tmp, 1e-12), 1 - 1e-12)
 
-      return(sum(r_vec * log(P_tmp) + (n_vec - r_vec) * log(1 - P_tmp)))
+      ll <- sum(r_vec * log(P_tmp) + (n_vec - r_vec) * log(1 - P_tmp))
+
+      # Beta(5, 17) prior on g: keeps g near 0.2, prevents wandering.
+      # Standard MAP practice for 3PL; does not affect 2PL/Rasch.
+      if(mod_type == "3PL") {
+        loc_g_val <- pmin(pmax(p_vec[idx_g], 1e-9), 1 - 1e-9)
+        ll <- ll + (5 - 1) * log(loc_g_val) + (17 - 1) * log(1 - loc_g_val)
+      }
+
+      return(ll)
     }
 
-    # Newton-Raphson with Finite Differences (keeps code dependency-free)
+    # Newton-Raphson with Finite Differences (keeps code dependency-free).
+    # For 3PL: alternating-block updates — first optimise a/d with g fixed,
+    # then optimise g alone. This breaks the cross-parameter oscillation that
+    # occurs when the diagonal-only Hessian ignores a-g and d-g covariances.
     h <- 1e-4
-    for(iter in 1:con$nr_max_iter) {
-      n_params <- length(curr_vec)
-      grad <- numeric(n_params)
-      hess <- matrix(0, n_params, n_params)
+
+    nr_iters_ad <- if(mod_type == "3PL") ceiling(con$nr_max_iter * 0.6) else con$nr_max_iter
+    nr_iters_g  <- if(mod_type == "3PL") con$nr_max_iter - nr_iters_ad else 0L
+
+    # ---- Block 1: update a and d (g held fixed at curr_vec[idx_g]) ----
+    idx_ad <- c(idx_a, idx_d)
+    for(iter in 1:nr_iters_ad) {
+      n_ad <- length(idx_ad)
+      grad_ad <- numeric(n_ad)
+      hess_ad <- matrix(0, n_ad, n_ad)
       f0 <- ll_func(curr_vec)
 
-      # Gradient
-      for(k in 1:n_params) {
+      for(ki in seq_along(idx_ad)) {
+        k <- idx_ad[ki]
         tmp <- curr_vec; tmp[k] <- tmp[k] + h
-        grad[k] <- (ll_func(tmp) - f0) / h
+        grad_ad[ki] <- (ll_func(tmp) - f0) / h
       }
-
-      # Hessian (Diagonal approximation for speed and stability in MIRT)
-      for(k in 1:n_params) {
-        tmp_kk <- curr_vec; tmp_kk[k] <- tmp_kk[k] + h
-        tmp_mk <- curr_vec; tmp_mk[k] <- tmp_mk[k] - h
-        hess[k, k] <- (ll_func(tmp_kk) - 2*f0 + ll_func(tmp_mk)) / (h^2)
+      for(ki in seq_along(idx_ad)) {
+        k <- idx_ad[ki]
+        tmp_p <- curr_vec; tmp_p[k] <- tmp_p[k] + h
+        tmp_m <- curr_vec; tmp_m[k] <- tmp_m[k] - h
+        hess_ad[ki, ki] <- (ll_func(tmp_p) - 2*f0 + ll_func(tmp_m)) / (h^2)
       }
+      diag(hess_ad) <- diag(hess_ad) - 0.01
 
-      # Ridge penalty to ensure identifiability and invertibility
-      diag(hess) <- diag(hess) - 1e-3
+      step_ad <- tryCatch(solve(hess_ad, grad_ad), error = function(e) rep(0, n_ad))
+      step_ad  <- pmin(pmax(step_ad, -1.0), 1.0)
+      curr_vec[idx_ad] <- curr_vec[idx_ad] - step_ad * con$nr_damp
 
-      step <- tryCatch(solve(hess, grad), error = function(e) rep(0, n_params))
+      if(mod_type != "RASCH") curr_vec[idx_a] <- pmin(pmax(curr_vec[idx_a], 0.01), 4.0)
+      curr_vec[idx_d] <- pmin(pmax(curr_vec[idx_d], -10), 10)
 
-      # Bounding the step size to prevent explosions
-      step <- pmin(pmax(step, -1.0), 1.0)
-
-      curr_vec <- curr_vec - step * con$nr_damp
-
-      # Parameter Constraints
-      idx <- 1
-      if(mod_type != "RASCH") {
-        # Constraints for slopes (a)
-        curr_vec[idx:(idx + length(active_a_idx) - 1)] <- pmin(pmax(curr_vec[idx:(idx + length(active_a_idx) - 1)], 0.01), 4.0)
-        idx <- idx + length(active_a_idx)
-      }
-      # Constraint for intercept (d)
-      curr_vec[idx] <- pmin(pmax(curr_vec[idx], -10), 10)
-
-      if(mod_type == "3PL") {
-        # Constraint for guessing (g)
-        curr_vec[idx + 1] <- pmin(pmax(curr_vec[idx + 1], 0.001), 0.4)
-      }
-
-      if(max(abs(step)) < 1e-4) break
+      if(max(abs(step_ad)) < 1e-4) break
     }
 
-    # Map back to full parameters
+    # ---- Block 2 (3PL only): update g alone with a/d held fixed ----
+    if(mod_type == "3PL") {
+      for(iter in 1:nr_iters_g) {
+        f0 <- ll_func(curr_vec)
+        tmp_p <- curr_vec; tmp_p[idx_g] <- tmp_p[idx_g] + h
+        tmp_m <- curr_vec; tmp_m[idx_g] <- tmp_m[idx_g] - h
+        grad_g <- (ll_func(tmp_p) - f0) / h
+        hess_g <- (ll_func(tmp_p) - 2*f0 + ll_func(tmp_m)) / (h^2)
+        hess_g  <- hess_g - 0.01
+
+        step_g <- tryCatch(grad_g / hess_g, error = function(e) 0)
+        step_g  <- pmin(pmax(step_g, -0.05), 0.05)
+        curr_vec[idx_g] <- curr_vec[idx_g] - step_g * con$nr_damp
+        curr_vec[idx_g] <- pmin(pmax(curr_vec[idx_g], 0.001), 0.4)
+
+        if(abs(step_g) < 1e-5) break
+      }
+    }
+
+    # Map back to full parameters — using stable index map
     final_a <- cur_a; final_d <- cur_d; final_g <- cur_g
-    idx <- 1
-    if(mod_type != "RASCH") {
-      final_a[active_a_idx] <- curr_vec[idx:(idx + length(active_a_idx) - 1)]
-      idx <- idx + length(active_a_idx)
-    }
-    final_d <- curr_vec[idx]
-    if(mod_type == "3PL") final_g <- curr_vec[idx + 1]
+    if(mod_type != "RASCH") final_a[active_a_idx] <- curr_vec[idx_a]
+    final_d <- curr_vec[idx_d]
+    if(mod_type == "3PL") final_g <- curr_vec[idx_g]
 
     # Calculate Standard Errors
-    se_vec <- rep(NA, length(curr_vec))
+    se_vec <- rep(NA, n_params)
     tryCatch({
       hess_final <- matrix(0, n_params, n_params)
       f0 <- ll_func(curr_vec)
@@ -293,19 +312,17 @@ mirt_binary <- function(data,
         tmp_mk <- curr_vec; tmp_mk[k] <- tmp_mk[k] - h
         hess_final[k, k] <- (ll_func(tmp_kk) - 2*f0 + ll_func(tmp_mk)) / (h^2)
       }
-      diag(hess_final) <- diag(hess_final) - 1e-5
-      se_vec <- sqrt(diag(solve(-hess_final)))
+      # Consistent ridge with optimization pass (was 1e-5)
+      diag(hess_final) <- diag(hess_final) - 0.01
+      # pmax guards against tiny positive rounding errors producing NaN from sqrt
+      se_vec <- sqrt(pmax(diag(solve(-hess_final)), 0))
     }, error = function(e) NULL)
 
-    # Map SEs back
+    # Map SEs back — using stable index map (FIX 3: no off-by-one risk)
     se_a <- rep(NA, D); se_d <- NA; se_g <- NA
-    idx <- 1
-    if(mod_type != "RASCH") {
-      se_a[active_a_idx] <- se_vec[idx:(idx + length(active_a_idx) - 1)]
-      idx <- idx + length(active_a_idx)
-    }
-    se_d <- se_vec[idx]
-    if(mod_type == "3PL") se_g <- se_vec[idx + 1]
+    if(mod_type != "RASCH") se_a[active_a_idx] <- se_vec[idx_a]
+    se_d <- se_vec[idx_d]
+    if(mod_type == "3PL") se_g <- se_vec[idx_g]
 
     return(list(a = final_a, d = final_d, g = final_g,
                 se_a = se_a, se_d = se_d, se_g = se_g))
