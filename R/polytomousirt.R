@@ -34,7 +34,19 @@
 #'   \item \code{settings}: A list of control parameters used in the estimation.
 #' }
 #' @examples
-#'   # --- Example 1: Simulation (GPCM) ---
+#'   # --- Quick Example (small data) ---
+#'   set.seed(1)
+#'   n <- 50
+#'   resp <- data.frame(
+#'     I1 = sample(0:2, n, replace = TRUE),
+#'     I2 = sample(0:2, n, replace = TRUE),
+#'     I3 = sample(0:3, n, replace = TRUE)
+#'   )
+#'   res <- polytomous_irt(resp, model = "GPCM", method = "EM",
+#'                         control = list(max_iter = 5, verbose = FALSE))
+#'   head(res$item_params)
+#'  \donttest{
+#'   # --- Full Example 1: Simulation (GPCM) ---
 #'   set.seed(2026)
 #'   N <- 500; J <- 5
 #'   n_cats <- c(3, 4, 3, 5, 4)
@@ -74,7 +86,6 @@
 #'   head(res$item_params)
 #'   print(res$model_fit)
 #'
-#'   \donttest{
 #'   # Run Estimation with prior (MAP)
 #'   res_prior <- polytomous_irt(df_sim, model="PCM", method="EM",
 #'                               control=list(max_iter=20, verbose=FALSE,

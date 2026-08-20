@@ -1,0 +1,217 @@
+---
+title: "Psychometric Tools in tirt: Information, Scoring, Fit, DIF, and Mixtures"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Psychometric Tools in tirt: Information, Scoring, Fit, DIF, and Mixtures}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+**1. Overview**
+
+Once item and person parameters have been estimated, a psychometric study usually
+continues with a battery of follow-up analyses: evaluating measurement precision,
+building score-conversion tables, checking person and item fit, screening for
+local dependence and differential item functioning, summarizing reliability, and
+sometimes probing for latent subpopulations. This vignette walks through the
+post-estimation tools in **tirt**. Every function accepts the item-parameter data
+frame produced by `binary_irt()`, `polytomous_irt()`, or `mixed_irt()`, so the
+workflow is uniform across models.
+
+```{r setup}
+library(tirt)
+```
+
+We start from a small simulated 2PL data set and a quick calibration.
+
+```{r calibrate}
+set.seed(2025)
+sim <- sim_irt(
+  n_people = 600,
+  item_structure = list(list(model = "2PL", n_items = 12))
+)
+
+fit <- binary_irt(sim$resp, model = "2PL", method = "EM",
+                  control = list(max_iter = 20, verbose = FALSE))
+head(fit$item_params)
+```
+
+**2. Item and Test Information**
+
+`item_info()` returns the Fisher information of each item across a grid of
+ability values, and `test_info()` sums it into the test information function
+together with the conditional standard error of measurement (SEM).
+
+```{r information}
+theta_grid <- seq(-3, 3, by = 0.5)
+
+# Item information (items in rows, theta in columns)
+info <- item_info(fit$item_params, theta = theta_grid)
+round(info[1:3, ], 3)
+
+# Test information function and conditional SEM
+tif <- test_info(fit$item_params, theta = theta_grid)
+tif
+
+# Where does the test measure most precisely?
+tif$theta[which.max(tif$test_info)]
+```
+
+**3. Summed-Score to Theta Conversion Table**
+
+Operational programs report scale scores from raw (summed) scores. `score_table()`
+produces the conversion using the Lord-Wingersky recursion, supporting expected a
+posteriori (`"EAP"`), weighted likelihood (`"WLE"`), and maximum likelihood
+(`"MLE"`) scoring.
+
+```{r score_table}
+# EAP conversion table (0 to 12 correct)
+score_table(fit$item_params, method = "EAP")
+
+# Maximum-likelihood conversion
+score_table(fit$item_params, method = "MLE")
+```
+
+**4. Person Fit**
+
+`person_fit()` computes the `lz` standardized log-likelihood index to identify
+examinees whose response patterns are unlikely under the model.
+
+```{r person_fit}
+pf <- person_fit(sim$resp, fit$item_params, fit$person_params)
+head(pf)
+
+# Number of examinees flagged as potentially misfitting
+sum(pf$flag, na.rm = TRUE)
+```
+
+**5. Item Fit**
+
+`item_fit()` returns the infit and outfit mean-square statistics and their
+standardized versions, for dichotomous and polytomous items alike.
+
+```{r item_fit}
+item_fit(sim$resp, fit$item_params)
+```
+
+**6. Local Dependence (Yen's Q3)**
+
+`ld_stats()` computes Yen's Q3 residual correlations for every item pair. Large
+positive values signal that a pair depends on something beyond the common trait,
+which is the situation a testlet model is designed to absorb.
+
+```{r ld_stats}
+q3 <- ld_stats(sim$resp, fit$item_params)
+round(q3[1:5, 1:5], 3)
+
+# Largest absolute residual correlation
+attr(q3, "max_abs_q3")
+```
+
+**7. Differential Item Functioning**
+
+`dif()` screens dichotomous items for DIF using the Mantel-Haenszel procedure
+(with the ETS delta effect size and A/B/C flags) and logistic regression (which
+separates uniform and non-uniform DIF). Here we plant DIF in item 3.
+
+```{r dif}
+resp_dif <- sim$resp
+grp <- rep(c("Reference", "Focal"), each = 300)
+flip <- grp == "Focal" & resp_dif[[3]] == 1
+resp_dif[[3]][flip] <- rbinom(sum(flip), 1, 0.55)
+
+dif(resp_dif, group = grp)[, c("item", "MH_delta", "ETS_class", "LR_p")]
+```
+
+**8. Reliability**
+
+`reliability()` reports the empirical (marginal) reliability from person estimates
+and their standard errors, the model-based marginal reliability from the test
+information function, and classical Cronbach's alpha from the raw responses.
+
+```{r reliability}
+reliability(person_params = fit$person_params,
+            data = sim$resp,
+            item_params = fit$item_params)
+```
+
+**9. Test Characteristic Curve**
+
+`tcc()` returns the expected score of each item and the test characteristic curve,
+which maps ability onto the number-correct metric.
+
+```{r tcc}
+curves <- tcc(fit$item_params, theta = seq(-3, 3, by = 1))
+curves$test_curve
+```
+
+**10. Multidimensional and Mixed Simulation**
+
+Two new simulators extend the data-generation toolkit. `sim_mirt()` produces
+compensatory multidimensional data (aligned with `mirt_binary()`), and
+`sim_tirt()` produces forms that mix independent items with testlets (aligned with
+`irt_trt()`).
+
+```{r sim_mirt}
+# Two correlated dimensions, simple structure
+mdat <- sim_mirt(
+  n_people = 400,
+  dimension = 2,
+  Sigma = matrix(c(1, 0.4, 0.4, 1), 2, 2),
+  item_structure = list(
+    list(model = "M2PL", n_items = 6, dims = 1),
+    list(model = "M2PL", n_items = 6, dims = 2)
+  )
+)
+head(mdat$true_params)
+```
+
+```{r sim_tirt}
+# Independent items plus two testlets
+tdat <- sim_tirt(
+  n_people = 400,
+  item_structure = list(
+    list(model = "2PL",  n_items = 6),
+    list(model = "2PLT", n_items = 4, testlet_id = "P1", testlet_var = 0.6),
+    list(model = "GPCT", n_items = 3, categories = 3, testlet_id = "P2")
+  )
+)
+tdat$true_item_params[, c("item_id", "model", "testlet")]
+```
+
+**11. Mixture (Latent-Class) IRT**
+
+`mixture_irt()` fits a mixture Rasch or 2PL model, in which the population is a
+blend of latent classes with class-specific item parameters.
+
+```{r mixture}
+set.seed(11)
+N <- 300; J <- 8
+b1 <- seq(-1.5, 1.5, length.out = J); b2 <- rev(b1)
+theta <- rnorm(N); cls <- rep(1:2, each = N / 2)
+rmat <- matrix(0, N, J)
+for (i in 1:N) {
+  b <- if (cls[i] == 1) b1 else b2
+  rmat[i, ] <- rbinom(J, 1, 1 / (1 + exp(-(theta[i] - b))))
+}
+mdf <- as.data.frame(rmat); names(mdf) <- paste0("I", 1:J)
+
+mix <- mixture_irt(mdf, n_class = 2, model = "Rasch",
+                   control = list(max_iter = 40, verbose = FALSE))
+mix$class_params
+mix$model_fit
+```
+
+**12. Final Comment**
+
+Together with the estimation, calibration, and equating functions described in the
+companion vignette, these tools cover the routine post-estimation workflow of an
+operational testing program. For details on any function, use the help system,
+for example `?score_table`.

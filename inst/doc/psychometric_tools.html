@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Psychometric Tools in tirt: Information, Scoring, Fit, DIF, and Mixtures</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Psychometric Tools in tirt: Information,
+Scoring, Fit, DIF, and Mixtures</h1>
+
+
+
+<p><strong>1. Overview</strong></p>
+<p>Once item and person parameters have been estimated, a psychometric
+study usually continues with a battery of follow-up analyses: evaluating
+measurement precision, building score-conversion tables, checking person
+and item fit, screening for local dependence and differential item
+functioning, summarizing reliability, and sometimes probing for latent
+subpopulations. This vignette walks through the post-estimation tools in
+<strong>tirt</strong>. Every function accepts the item-parameter data
+frame produced by <code>binary_irt()</code>,
+<code>polytomous_irt()</code>, or <code>mixed_irt()</code>, so the
+workflow is uniform across models.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(tirt)</span></code></pre></div>
+<p>We start from a small simulated 2PL data set and a quick
+calibration.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2025</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">sim_irt</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">n_people =</span> <span class="dv">600</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">item_structure =</span> <span class="fu">list</span>(<span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>, <span class="at">n_items =</span> <span class="dv">12</span>))</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; Starting Simulation for N = 600 examinees...</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Ability (Theta): Generated from N(mean=0.00, sd=1.00).</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 1: 12 items using 2PL</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;    - Discrimination (a): Default values used (Fixed at 1).</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;    - Difficulty (b): Default values used (Fixed at 0).</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; Constructing final data frames...</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; Simulation Complete.</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; Summary: 12 items, 600 examinees.</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">binary_irt</span>(sim<span class="sc">$</span>resp, <span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>, <span class="at">method =</span> <span class="st">&quot;EM&quot;</span>,</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>                  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">max_iter =</span> <span class="dv">20</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="fu">head</span>(fit<span class="sc">$</span>item_params)</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt;     item discrimination discrimination_se difficulty difficulty_se number</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; 1 item_1          1.010             0.108     -0.057         0.089    600</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; 2 item_2          0.946             0.105     -0.001         0.094    600</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; 3 item_3          0.974             0.106      0.073         0.092    600</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt; 4 item_4          0.866             0.102     -0.099         0.102    600</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; 5 item_5          0.906             0.103     -0.070         0.098    600</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 6 item_6          0.970             0.106      0.016         0.092    600</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt;   pvalue</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 1  0.512</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; 2  0.500</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt; 3  0.485</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt; 4  0.518</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt; 5  0.513</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt; 6  0.497</span></span></code></pre></div>
+<p><strong>2. Item and Test Information</strong></p>
+<p><code>item_info()</code> returns the Fisher information of each item
+across a grid of ability values, and <code>test_info()</code> sums it
+into the test information function together with the conditional
+standard error of measurement (SEM).</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>theta_grid <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">3</span>, <span class="dv">3</span>, <span class="at">by =</span> <span class="fl">0.5</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co"># Item information (items in rows, theta in columns)</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>info <span class="ot">&lt;-</span> <span class="fu">item_info</span>(fit<span class="sc">$</span>item_params, <span class="at">theta =</span> theta_grid)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">round</span>(info[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ], <span class="dv">3</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;           -3  -2.5    -2  -1.5    -1  -0.5     0   0.5     1   1.5     2   2.5</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; item_1 0.047 0.074 0.110 0.156 0.205 0.243 0.255 0.236 0.194 0.145 0.101 0.067</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; item_2 0.047 0.070 0.102 0.140 0.180 0.212 0.224 0.212 0.180 0.140 0.102 0.070</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; item_3 0.043 0.066 0.098 0.139 0.183 0.220 0.237 0.227 0.195 0.151 0.109 0.075</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;            3</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; item_1 0.043</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; item_2 0.047</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; item_3 0.049</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co"># Test information function and conditional SEM</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>tif <span class="ot">&lt;-</span> <span class="fu">test_info</span>(fit<span class="sc">$</span>item_params, <span class="at">theta =</span> theta_grid)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>tif</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt;    theta test_info       sem reliability</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; 1   -3.0 0.5479329 1.3509408   0.3539772</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; 2   -2.5 0.8379575 1.0924184   0.4559178</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; 3   -2.0 1.2398965 0.8980640   0.5535508</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 4   -1.5 1.7458850 0.7568193   0.6358187</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 5   -1.0 2.2902138 0.6607878   0.6960684</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; 6   -0.5 2.7337536 0.6048119   0.7321730</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; 7    0.0 2.9109843 0.5861113   0.7443099</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; 8    0.5 2.7414786 0.6039592   0.7327260</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt; 9    1.0 2.2991850 0.6594973   0.6968948</span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt; 10   1.5 1.7505310 0.7558143   0.6364338</span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt; 11   2.0 1.2393432 0.8982645   0.5534405</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; 12   2.5 0.8341527 1.0949069   0.4547891</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; 13   3.0 0.5430402 1.3570131   0.3519287</span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co"># Where does the test measure most precisely?</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a>tif<span class="sc">$</span>theta[<span class="fu">which.max</span>(tif<span class="sc">$</span>test_info)]</span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span></code></pre></div>
+<p><strong>3. Summed-Score to Theta Conversion Table</strong></p>
+<p>Operational programs report scale scores from raw (summed) scores.
+<code>score_table()</code> produces the conversion using the
+Lord-Wingersky recursion, supporting expected a posteriori
+(<code>&quot;EAP&quot;</code>), weighted likelihood (<code>&quot;WLE&quot;</code>), and
+maximum likelihood (<code>&quot;MLE&quot;</code>) scoring.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># EAP conversion table (0 to 12 correct)</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">score_table</span>(fit<span class="sc">$</span>item_params, <span class="at">method =</span> <span class="st">&quot;EAP&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;    summed_score  theta    se</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1             0 -1.845 0.643</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2             1 -1.468 0.605</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3             2 -1.131 0.572</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4             3 -0.826 0.548</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 5             4 -0.541 0.532</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 6             5 -0.269 0.522</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; 7             6 -0.004 0.519</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; 8             7  0.262 0.522</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 9             8  0.534 0.531</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; 10            9  0.819 0.547</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 11           10  1.124 0.571</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 12           11  1.461 0.604</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 13           12  1.840 0.643</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co"># Maximum-likelihood conversion</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="fu">score_table</span>(fit<span class="sc">$</span>item_params, <span class="at">method =</span> <span class="st">&quot;MLE&quot;</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt;    summed_score  theta    se</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; 1             0 -4.000    NA</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; 2             1 -2.471 1.096</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; 3             2 -1.654 0.810</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; 4             3 -1.129 0.679</span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; 5             4 -0.713 0.625</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; 6             5 -0.348 0.595</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; 7             6 -0.004 0.588</span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt; 8             7  0.339 0.595</span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; 9             8  0.703 0.624</span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; 10            9  1.117 0.678</span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; 11           10  1.639 0.783</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; 12           11  2.449 1.054</span></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; 13           12  4.000    NA</span></span></code></pre></div>
+<p><strong>4. Person Fit</strong></p>
+<p><code>person_fit()</code> computes the <code>lz</code> standardized
+log-likelihood index to identify examinees whose response patterns are
+unlikely under the model.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>pf <span class="ot">&lt;-</span> <span class="fu">person_fit</span>(sim<span class="sc">$</span>resp, fit<span class="sc">$</span>item_params, fit<span class="sc">$</span>person_params)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">head</span>(pf)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt;   person n_items  theta loglik     lz  flag</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; 1      1      12  0.668 -7.585  0.102 FALSE</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; 2      2      12  0.325 -8.121  0.069 FALSE</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 3      3      12  0.044 -8.410 -0.763 FALSE</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 4      4      12  0.399 -8.259 -0.259 FALSE</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 5      5      12  0.406 -8.186 -0.159 FALSE</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 6      6      12 -1.591 -5.518  0.012 FALSE</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co"># Number of examinees flagged as potentially misfitting</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="fu">sum</span>(pf<span class="sc">$</span>flag, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span></code></pre></div>
+<p><strong>5. Item Fit</strong></p>
+<p><code>item_fit()</code> returns the infit and outfit mean-square
+statistics and their standardized versions, for dichotomous and
+polytomous items alike.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">item_fit</span>(sim<span class="sc">$</span>resp, fit<span class="sc">$</span>item_params)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt;       item   n outfit outfit_z infit infit_z</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; 1   item_1 600  0.861   -3.893 0.892  -3.746</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 2   item_2 600  0.875   -3.783 0.903  -3.518</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 3   item_3 600  0.863   -3.989 0.901  -3.517</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 4   item_4 600  0.894   -3.476 0.916  -3.257</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 5   item_5 600  0.887   -3.550 0.909  -3.431</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 6   item_6 600  0.871   -3.779 0.899  -3.621</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 7   item_7 600  0.871   -3.849 0.902  -3.530</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 8   item_8 600  0.848   -3.991 0.880  -3.998</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; 9   item_9 600  0.891   -3.482 0.911  -3.392</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 10 item_10 600  0.834   -4.241 0.876  -4.036</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 11 item_11 600  0.829   -4.278 0.875  -4.012</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 12 item_12 600  0.869   -3.843 0.900  -3.561</span></span></code></pre></div>
+<p><strong>6. Local Dependence (Yen’s Q3)</strong></p>
+<p><code>ld_stats()</code> computes Yen’s Q3 residual correlations for
+every item pair. Large positive values signal that a pair depends on
+something beyond the common trait, which is the situation a testlet
+model is designed to absorb.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>q3 <span class="ot">&lt;-</span> <span class="fu">ld_stats</span>(sim<span class="sc">$</span>resp, fit<span class="sc">$</span>item_params)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">round</span>(q3[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], <span class="dv">3</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt;        item_1 item_2 item_3 item_4 item_5</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; item_1  1.000 -0.039 -0.004 -0.067 -0.040</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; item_2 -0.039  1.000 -0.098  0.001 -0.155</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; item_3 -0.004 -0.098  1.000 -0.056 -0.105</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; item_4 -0.067  0.001 -0.056  1.000 -0.018</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; item_5 -0.040 -0.155 -0.105 -0.018  1.000</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co"># Largest absolute residual correlation</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="fu">attr</span>(q3, <span class="st">&quot;max_abs_q3&quot;</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; [1] 0.1841257</span></span></code></pre></div>
+<p><strong>7. Differential Item Functioning</strong></p>
+<p><code>dif()</code> screens dichotomous items for DIF using the
+Mantel-Haenszel procedure (with the ETS delta effect size and A/B/C
+flags) and logistic regression (which separates uniform and non-uniform
+DIF). Here we plant DIF in item 3.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>resp_dif <span class="ot">&lt;-</span> sim<span class="sc">$</span>resp</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>grp <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;Reference&quot;</span>, <span class="st">&quot;Focal&quot;</span>), <span class="at">each =</span> <span class="dv">300</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>flip <span class="ot">&lt;-</span> grp <span class="sc">==</span> <span class="st">&quot;Focal&quot;</span> <span class="sc">&amp;</span> resp_dif[[<span class="dv">3</span>]] <span class="sc">==</span> <span class="dv">1</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>resp_dif[[<span class="dv">3</span>]][flip] <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="fu">sum</span>(flip), <span class="dv">1</span>, <span class="fl">0.55</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">dif</span>(resp_dif, <span class="at">group =</span> grp)[, <span class="fu">c</span>(<span class="st">&quot;item&quot;</span>, <span class="st">&quot;MH_delta&quot;</span>, <span class="st">&quot;ETS_class&quot;</span>, <span class="st">&quot;LR_p&quot;</span>)]</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt;       item MH_delta ETS_class   LR_p</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; 1   item_1    0.175         A 0.6064</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; 2   item_2   -0.235         A 0.1189</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 3   item_3    1.910         C 0.0000</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 4   item_4   -0.587         A 0.2569</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 5   item_5    0.599         A 0.3319</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; 6   item_6    0.155         A 0.3628</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; 7   item_7    0.434         A 0.4699</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; 8   item_8   -0.781         A 0.1236</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; 9   item_9   -0.820         A 0.2681</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; 10 item_10   -0.144         A 0.9380</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; 11 item_11   -0.262         A 0.0020</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; 12 item_12   -0.475         A 0.7313</span></span></code></pre></div>
+<p><strong>8. Reliability</strong></p>
+<p><code>reliability()</code> reports the empirical (marginal)
+reliability from person estimates and their standard errors, the
+model-based marginal reliability from the test information function, and
+classical Cronbach’s alpha from the raw responses.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">reliability</span>(<span class="at">person_params =</span> fit<span class="sc">$</span>person_params,</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>            <span class="at">data =</span> sim<span class="sc">$</span>resp,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>            <span class="at">item_params =</span> fit<span class="sc">$</span>item_params)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;                   Index    Value</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 1 empirical_reliability   0.7256</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 2  marginal_reliability   0.6886</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 3        cronbach_alpha   0.7070</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 4               n_items  12.0000</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 5             n_persons 600.0000</span></span></code></pre></div>
+<p><strong>9. Test Characteristic Curve</strong></p>
+<p><code>tcc()</code> returns the expected score of each item and the
+test characteristic curve, which maps ability onto the number-correct
+metric.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>curves <span class="ot">&lt;-</span> <span class="fu">tcc</span>(fit<span class="sc">$</span>item_params, <span class="at">theta =</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">3</span>, <span class="dv">3</span>, <span class="at">by =</span> <span class="dv">1</span>))</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>curves<span class="sc">$</span>test_curve</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt;   theta expected_score</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; 1    -3      0.6204589</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; 2    -2      1.5004155</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; 3    -1      3.2870410</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 4     0      6.0113887</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 5     1      8.7381246</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 6     2     10.5220784</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 7     3     11.3938127</span></span></code></pre></div>
+<p><strong>10. Multidimensional and Mixed Simulation</strong></p>
+<p>Two new simulators extend the data-generation toolkit.
+<code>sim_mirt()</code> produces compensatory multidimensional data
+(aligned with <code>mirt_binary()</code>), and <code>sim_tirt()</code>
+produces forms that mix independent items with testlets (aligned with
+<code>irt_trt()</code>).</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Two correlated dimensions, simple structure</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>mdat <span class="ot">&lt;-</span> <span class="fu">sim_mirt</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">n_people =</span> <span class="dv">400</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">dimension =</span> <span class="dv">2</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">Sigma =</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">0.4</span>, <span class="fl">0.4</span>, <span class="dv">1</span>), <span class="dv">2</span>, <span class="dv">2</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">item_structure =</span> <span class="fu">list</span>(</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;M2PL&quot;</span>, <span class="at">n_items =</span> <span class="dv">6</span>, <span class="at">dims =</span> <span class="dv">1</span>),</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;M2PL&quot;</span>, <span class="at">n_items =</span> <span class="dv">6</span>, <span class="at">dims =</span> <span class="dv">2</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  )</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>)</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; Starting Multidimensional Simulation (N = 400, D = 2)...</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Ability (Theta): Generated from MVN with mean 0.00 and supplied Sigma.</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 1: 6 items (M2PL), loading on dim(s) 1</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 2: 6 items (M2PL), loading on dim(s) 2</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="co">#&gt; Constructing final data frames...</span></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a><span class="co">#&gt; Simulation Complete.</span></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co">#&gt; Summary: 12 items, 400 examinees, 2 dimensions.</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt; ----------------------------------------------------------------</span></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="fu">head</span>(mdat<span class="sc">$</span>true_params)</span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co">#&gt;   item_id block model categories    a_Dim1 a_Dim2          d guessing</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="co">#&gt; 1  item_1     1  M2PL          2 0.8192317      0  0.8491260        0</span></span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="co">#&gt; 2  item_2     1  M2PL          2 1.7109341      0  0.5145288        0</span></span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="co">#&gt; 3  item_3     1  M2PL          2 1.7031725      0 -1.0493497        0</span></span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a><span class="co">#&gt; 4  item_4     1  M2PL          2 0.9961762      0  1.4578654        0</span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a><span class="co">#&gt; 5  item_5     1  M2PL          2 1.5794204      0  0.5032779        0</span></span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a><span class="co">#&gt; 6  item_6     1  M2PL          2 1.2982607      0  1.3152575        0</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Independent items plus two testlets</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>tdat <span class="ot">&lt;-</span> <span class="fu">sim_tirt</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">n_people =</span> <span class="dv">400</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">item_structure =</span> <span class="fu">list</span>(</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;2PL&quot;</span>,  <span class="at">n_items =</span> <span class="dv">6</span>),</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;2PLT&quot;</span>, <span class="at">n_items =</span> <span class="dv">4</span>, <span class="at">testlet_id =</span> <span class="st">&quot;P1&quot;</span>, <span class="at">testlet_var =</span> <span class="fl">0.6</span>),</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">model =</span> <span class="st">&quot;GPCT&quot;</span>, <span class="at">n_items =</span> <span class="dv">3</span>, <span class="at">categories =</span> <span class="dv">3</span>, <span class="at">testlet_id =</span> <span class="st">&quot;P2&quot;</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  )</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>)</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;    STARTING MIXED IRT/TRT SIMULATION (N = 400)</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Ability (Theta): Generated from N(mean=0.00, sd=1.00).</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Testlet Effects (Gamma):</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt;    - Testlet &#39;P1&#39;: Generated Gamma ~ N(0, 0.60) [User Var].</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt;    - Testlet &#39;P2&#39;: Generated Gamma ~ N(0, 0.50) [Default].</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 1: 6 items (Model: 2PL, Independent)</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 2: 4 items (Model: 2PLT, Testlet: P1)</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; &gt;&gt; Block 3: 3 items (Model: GPCT, Testlet: P2)</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt; Constructing final data frames...</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt; Simulation Complete.</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt; Summary: 13 items (2 testlets), 400 examinees.</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt; ================================================================</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a>tdat<span class="sc">$</span>true_item_params[, <span class="fu">c</span>(<span class="st">&quot;item_id&quot;</span>, <span class="st">&quot;model&quot;</span>, <span class="st">&quot;testlet&quot;</span>)]</span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt;    item_id model testlet</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#&gt; 1   item_1   2PL    &lt;NA&gt;</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#&gt; 2   item_2   2PL    &lt;NA&gt;</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="co">#&gt; 3   item_3   2PL    &lt;NA&gt;</span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co">#&gt; 4   item_4   2PL    &lt;NA&gt;</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#&gt; 5   item_5   2PL    &lt;NA&gt;</span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#&gt; 6   item_6   2PL    &lt;NA&gt;</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#&gt; 7   item_7  2PLT      P1</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#&gt; 8   item_8  2PLT      P1</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co">#&gt; 9   item_9  2PLT      P1</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="co">#&gt; 10 item_10  2PLT      P1</span></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co">#&gt; 11 item_11  GPCT      P2</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co">#&gt; 12 item_12  GPCT      P2</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a><span class="co">#&gt; 13 item_13  GPCT      P2</span></span></code></pre></div>
+<p><strong>11. Mixture (Latent-Class) IRT</strong></p>
+<p><code>mixture_irt()</code> fits a mixture Rasch or 2PL model, in
+which the population is a blend of latent classes with class-specific
+item parameters.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">11</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">300</span>; J <span class="ot">&lt;-</span> <span class="dv">8</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>b1 <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="fl">1.5</span>, <span class="fl">1.5</span>, <span class="at">length.out =</span> J); b2 <span class="ot">&lt;-</span> <span class="fu">rev</span>(b1)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(N); cls <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="at">each =</span> N <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>rmat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, N, J)</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>N) {</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="cf">if</span> (cls[i] <span class="sc">==</span> <span class="dv">1</span>) b1 <span class="cf">else</span> b2</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  rmat[i, ] <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(J, <span class="dv">1</span>, <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">exp</span>(<span class="sc">-</span>(theta[i] <span class="sc">-</span> b))))</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>}</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>mdf <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(rmat); <span class="fu">names</span>(mdf) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;I&quot;</span>, <span class="dv">1</span><span class="sc">:</span>J)</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>mix <span class="ot">&lt;-</span> <span class="fu">mixture_irt</span>(mdf, <span class="at">n_class =</span> <span class="dv">2</span>, <span class="at">model =</span> <span class="st">&quot;Rasch&quot;</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>                   <span class="at">control =</span> <span class="fu">list</span>(<span class="at">max_iter =</span> <span class="dv">40</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>mix<span class="sc">$</span>class_params</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt;   class proportion</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; 1     1     0.4873</span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; 2     2     0.5127</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>mix<span class="sc">$</span>model_fit</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt;           Index     Value</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt; 1 LogLikelihood -1533.969</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; 2           AIC  3101.938</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; 3           BIC  3164.902</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; 4       n_class     2.000</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; 5       entropy     0.613</span></span></code></pre></div>
+<p><strong>12. Final Comment</strong></p>
+<p>Together with the estimation, calibration, and equating functions
+described in the companion vignette, these tools cover the routine
+post-estimation workflow of an operational testing program. For details
+on any function, use the help system, for example
+<code>?score_table</code>.</p>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

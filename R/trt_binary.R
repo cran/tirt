@@ -27,7 +27,30 @@
 #' }
 #'
 #' @examples
-#'   # --- Example: Simulation (2PLT) ---
+#'   # --- Quick Example (small data) ---
+#'   set.seed(1)
+#'   n <- 50
+#'   J <- 4
+#'   theta <- rnorm(n)
+#'   gamma <- rnorm(n, 0, 0.5)
+#'   resp <- matrix(NA, n, J)
+#'   colnames(resp) <- paste0("Item_", 1:J)
+#'   b <- c(-0.5, 0, 0.5, 1)
+#'   for(j in 1:J) {
+#'     p <- 1 / (1 + exp(-(theta + gamma - b[j])))
+#'     resp[, j] <- rbinom(n, 1, p)
+#'   }
+#'   res <- trt_binary(
+#'     data = as.data.frame(resp),
+#'     group = list(1:2, 3:4),
+#'     model = "2PLT",
+#'     method = "EM",
+#'     control = list(max_iter = 5, verbose = FALSE)
+#'   )
+#'   head(res$item_params)
+#'
+#'  \donttest{
+#'   # --- Full Example: Simulation (2PLT) ---
 #'   set.seed(2025)
 #'   n_persons <- 500
 #'   n_testlets <- 3
@@ -81,6 +104,7 @@
 #'
 #'   head(res$item_params)
 #'   head(res$person_params)
+#'   }
 #' @export
 trt_binary <- function(
     data,

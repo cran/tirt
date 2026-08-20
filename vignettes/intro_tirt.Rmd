@@ -26,6 +26,8 @@ The **tirt** package provides a light-version user-friendly comprehensive toolki
 
 4. **Equating**: Linking scales using Mean-Mean, Mean-Sigma, and Stocking-Lord methods.
 
+5. **Post-estimation tools**: Item and test information, summed-score conversion tables, person- and item-fit statistics, local dependence (Yen's Q3), differential item functioning, reliability, test characteristic curves, and mixture models. These are covered in the companion vignette, `vignette("psychometric_tools", package = "tirt")`.
+
 This vignette walks through the primary workflows.
 ```{r setup}
 library(tirt)

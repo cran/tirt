@@ -47,7 +47,29 @@
 #'
 #' @importFrom stats dnorm qlogis var setNames
 #' @examples
-#'   # --- Example: Simulation (Binary + Poly + Testlets) ---
+#'   # --- Quick Example (small data) ---
+#'   set.seed(1)
+#'   n <- 50
+#'   resp <- data.frame(
+#'     I1 = rbinom(n, 1, 0.6),
+#'     I2 = rbinom(n, 1, 0.5),
+#'     I3 = rbinom(n, 1, 0.4),
+#'     I4 = sample(0:2, n, replace = TRUE),
+#'     I5 = rbinom(n, 1, 0.5),
+#'     I6 = rbinom(n, 1, 0.6)
+#'   )
+#'   spec <- data.frame(
+#'     item = colnames(resp),
+#'     model = c("2PL", "2PL", "2PL", "GRM", "2PLT", "2PLT"),
+#'     testlet = c(NA, NA, NA, NA, "T1", "T1"),
+#'     stringsAsFactors = FALSE
+#'   )
+#'   res <- irt_trt(resp, spec, method = "EM",
+#'                  control = list(max_iter = 5, verbose = FALSE))
+#'   head(res$item_params)
+#'
+#'   \donttest{
+#'   # --- Full Example: Simulation (Binary + Poly + Testlets) ---
 #'   set.seed(2025)
 #'   N <- 100; J <- 20
 #'
@@ -112,6 +134,7 @@
 #'
 #'   head(res$item_params)
 #'   head(res$person_params)
+#'   }
 #' @export
 irt_trt <- function(data,
                           item_spec,
